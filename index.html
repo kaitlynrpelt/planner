@@ -1,0 +1,2032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Desk</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --bg:#F7F7F5;
+  --card:#FFFFFF;
+  --ink:#37352F;
+  --muted:#9B9A97;
+  --line:#EBEBE9;
+  --line-strong:#DFDEDB;
+  --accent:#2F80ED;
+  --accent-soft:#E7F0FD;
+  --font-family:'Inter',-apple-system,sans-serif;
+  --radius:8px;
+  --radius-sm:6px;
+  --green:#2E9E6D;
+  --green-soft:#DDF3E7;
+  --orange:#D9730D;
+  --orange-soft:#FBECDD;
+  --red:#E03E3E;
+  --red-soft:#FBE4E4;
+  --purple:#8A6FD9;
+  --purple-soft:#EEE9FB;
+  --shadow:0 1px 2px rgba(15,15,15,.04), 0 1px 6px rgba(15,15,15,.04);
+  --shadow-hover:0 2px 4px rgba(15,15,15,.06), 0 4px 12px rgba(15,15,15,.06);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-family);
+  font-size:14px;
+  line-height:1.55;
+  padding:24px 32px 44px;
+  transition:background .2s ease,color .2s ease;
+}
+h1,h2,h3{font-family:var(--font-family);font-weight:600;margin:0;}
+button{font-family:inherit;cursor:pointer;}
+input,select,textarea{font-family:inherit;font-size:inherit;color:var(--ink);}
+
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:6px;}
+.top h1{font-size:22px;font-weight:700;letter-spacing:-0.01em;display:flex;align-items:center;gap:8px;}
+.top .today{font-size:13px;color:var(--muted);}
+
+.dashboard{
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px;
+  align-items:flex-start;
+}
+.panel{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:16px 18px 18px;
+  display:flex;
+  flex-direction:column;
+  min-width:280px;
+  max-width:100%;
+  box-sizing:border-box;
+  overflow:auto;
+  resize:horizontal;
+  transition:box-shadow .15s ease,border-color .15s ease;
+}
+.panel::-webkit-resizer{
+  background-image:linear-gradient(135deg, transparent 0 40%, var(--line-strong) 40% 55%, transparent 55% 65%, var(--line-strong) 65% 80%, transparent 80%);
+}
+.panel[data-span="1"]{width:calc(50% - 8px);}
+.panel[data-span="2"]{width:100%;}
+.panel.dragging{opacity:.45;border-color:var(--accent);}
+.panel.drag-over{border-color:var(--accent);box-shadow:var(--shadow-hover);}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
+.drag-handle{color:var(--muted);font-size:13px;letter-spacing:1px;margin-right:2px;user-select:none;cursor:grab;}
+.drag-handle:active{cursor:grabbing;}
+.panel-head h2{font-size:15.5px;font-weight:600;display:flex;align-items:center;gap:7px;}
+.panel-head .sub{font-size:12px;color:var(--muted);margin-top:2px;font-weight:400;}
+.panel-scroll{overflow-y:auto;padding-right:2px;resize:vertical;min-height:120px;}
+.panel-scroll::-webkit-resizer{
+  background-image:linear-gradient(135deg, transparent 0 40%, var(--line-strong) 40% 55%, transparent 55% 65%, var(--line-strong) 65% 80%, transparent 80%);
+}
+.panel-scroll::-webkit-scrollbar{width:6px;}
+.panel-scroll::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:3px;}
+
+#panel-cal .panel-scroll{height:340px;}
+#panel-todo .panel-scroll{height:420px;}
+#panel-notes .panel-scroll{height:340px;}
+
+.btn{
+  border:1px solid var(--line-strong);
+  background:var(--card);
+  color:var(--ink);
+  padding:6px 12px;
+  border-radius:var(--radius-sm);
+  font-size:12.5px;
+  font-weight:500;
+  transition:background .12s ease,border-color .12s ease;
+}
+.btn:hover{background:var(--bg);border-color:#C9C8C4;}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink);}
+.btn.primary:hover{background:#000;}
+.btn.ghost{background:transparent;border:1px solid var(--line-strong);}
+.btn.small{padding:5px 10px;font-size:11.5px;}
+
+/* Calendar */
+.agenda-day{margin-bottom:14px;}
+.agenda-day h3{font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:7px;letter-spacing:.03em;text-transform:uppercase;}
+.agenda-event{
+  display:flex;gap:10px;align-items:center;
+  padding:8px 10px;background:var(--bg);border:1px solid var(--line);border-radius:var(--radius-sm);
+  margin-bottom:5px;font-size:12.5px;
+}
+.agenda-event:hover{border-color:var(--line-strong);}
+.agenda-time{color:var(--muted);font-size:11px;white-space:nowrap;min-width:60px;font-weight:500;}
+.agenda-title{flex:1;font-weight:500;}
+.agenda-cal{font-size:10.5px;color:var(--accent);background:var(--accent-soft);padding:2px 8px;border-radius:20px;white-space:nowrap;font-weight:500;}
+.cal-note{font-size:11.5px;color:var(--muted);margin-top:10px;line-height:1.6;border-top:1px solid var(--line);padding-top:10px;}
+.cal-alt summary{cursor:pointer;font-size:11.5px;color:var(--muted);margin-top:8px;}
+.cal-alt summary:hover{color:var(--ink);}
+.cal-setup{margin-top:10px;}
+.cal-setup label{display:block;font-size:11.5px;font-weight:500;color:var(--muted);margin-bottom:6px;}
+.cal-row{display:flex;gap:8px;}
+.cal-row input{flex:1;padding:7px 10px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--card);font-size:12.5px;}
+.cal-row input:focus{outline:none;border-color:var(--accent);}
+.gcal-cal-row{margin-bottom:6px;}
+.gcal-cal-row input.gcal-label{flex:0 0 100px;}
+.gcal-cal-row .icon-btn{flex-shrink:0;}
+.cal-frame-wrap{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--card);margin-top:10px;}
+.cal-frame-wrap iframe{width:100%;height:340px;border:none;display:block;}
+
+/* Month calendar view */
+.cal-month-nav{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.cal-month-label{font-size:13px;font-weight:600;flex:1;text-align:center;}
+.icon-btn.small-icon{width:26px;height:26px;font-size:14px;}
+.cal-zoom-row{display:none;align-items:center;gap:6px;margin-bottom:8px;}
+.cal-zoom-row input[type=range]{flex:1;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-weekday{font-size:9.5px;font-weight:600;color:var(--muted);text-align:center;text-transform:uppercase;padding-bottom:3px;}
+.cal-day{
+  min-height:52px;border:1px solid var(--line);border-radius:5px;background:var(--bg);
+  padding:3px;font-size:10px;cursor:pointer;display:flex;flex-direction:column;gap:1px;
+  transition:border-color .12s,background .12s;
+}
+.cal-day:hover{border-color:var(--accent);}
+.cal-day.other-month{opacity:.35;}
+.cal-day.today .cal-day-num{background:var(--accent);color:#fff;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;}
+.cal-day.selected{border-color:var(--accent);background:var(--accent-soft);}
+.cal-day-num{font-size:10px;font-weight:600;}
+.cal-day-chips{display:flex;flex-direction:column;gap:1px;margin-top:1px;}
+.cal-event-chip{font-size:8.5px;line-height:1.3;color:#fff;padding:0px 3px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;}
+.cal-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.cal-day-more{font-size:8.5px;color:var(--muted);}
+.cal-day-view-head{margin-bottom:10px;}
+.cal-day-view-head h3{font-size:16px;}
+.cal-day-view-head .sub{margin-top:2px;}
+.cal-color-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12.5px;}
+.cal-color-row input[type=color]{width:32px;height:28px;padding:2px;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);flex-shrink:0;cursor:pointer;}
+
+/* Google-Calendar-style time grid (week/day views) */
+#cal-week-view,#cal-day-view{--cal-gutter-w:40px;}
+.cal-tg-header{display:flex;position:sticky;top:0;z-index:3;background:var(--card);border-bottom:1px solid var(--line);height:42px;box-sizing:border-box;}
+.cal-tg-gutter-spacer{width:var(--cal-gutter-w);flex-shrink:0;}
+.cal-tg-headcells{display:flex;flex:1;}
+.cal-tg-day-head{flex:1;text-align:center;cursor:pointer;border-left:1px solid var(--line);height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+.cal-tg-day-head:first-child{border-left:none;}
+.cal-tg-day-head:hover{background:var(--accent-soft);}
+.cal-tg-dow{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;}
+.cal-tg-daynum{font-size:13px;font-weight:600;}
+.cal-tg-day-head.today .cal-tg-daynum{background:var(--accent);color:#fff;border-radius:50%;width:20px;height:20px;line-height:20px;display:inline-flex;align-items:center;justify-content:center;}
+.cal-tg-allday-row{display:flex;position:sticky;top:42px;z-index:2;background:var(--card);border-bottom:1px solid var(--line);min-height:5px;}
+.cal-hide-allday .cal-tg-allday-row{display:none;}
+.cal-tg-allday-cells{display:flex;flex:1;}
+.cal-tg-allday-cell{flex:1;border-left:1px solid var(--line);padding:2px 3px;display:flex;flex-direction:column;gap:2px;}
+.cal-tg-allday-cell:first-child{border-left:none;}
+.cal-allday-chip{font-size:9.5px;color:#fff;padding:1px 5px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;cursor:pointer;}
+.cal-tg-body{display:flex;position:relative;}
+.cal-time-gutter{width:var(--cal-gutter-w);flex-shrink:0;position:relative;}
+.cal-time-label{position:absolute;right:6px;transform:translateY(-50%);font-size:9.5px;color:var(--muted);white-space:nowrap;}
+.cal-tg-columns{display:flex;flex:1;position:relative;}
+.cal-day-col{flex:1;position:relative;border-left:1px solid var(--line);}
+.cal-day-col:first-child{border-left:none;}
+.cal-hour-line{position:absolute;left:0;right:0;border-top:1px solid var(--line);}
+.cal-event-block{position:absolute;border-radius:4px;padding:2px 4px;overflow:hidden;color:#fff;font-size:10px;line-height:1.25;cursor:pointer;box-shadow:0 1px 2px rgba(15,15,15,.15);}
+.cal-event-block:hover{filter:brightness(0.92);}
+.cal-event-block-title{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-event-block-time{display:block;font-size:9px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-now-line{position:absolute;left:0;right:0;height:0;border-top:2px solid var(--red);z-index:2;pointer-events:none;}
+.cal-now-line::before{content:"";position:absolute;left:-4px;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--red);}
+
+
+/* To-do */
+.todo-add{display:flex;gap:7px;margin-bottom:12px;}
+.todo-add input{flex:1;padding:8px 11px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--card);font-size:13px;}
+.todo-add input:focus{outline:none;border-color:var(--accent);}
+.todo-list{list-style:none;margin:0;padding:0;}
+.todo-item{display:flex;align-items:flex-start;gap:10px;padding:9px 4px;border-radius:var(--radius-sm);}
+.todo-item:hover{background:var(--bg);}
+.check{width:16px;height:16px;flex-shrink:0;margin-top:2px;border:1.5px solid var(--line-strong);border-radius:4px;background:var(--card);appearance:none;cursor:pointer;position:relative;transition:background .12s,border-color .12s;}
+.check:hover{border-color:var(--accent);}
+.check:checked{background:var(--accent);border-color:var(--accent);}
+.check:checked::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg);}
+.todo-text{flex:1;font-size:13.5px;}
+.todo-item.done .todo-text{color:var(--muted);text-decoration:line-through;}
+.todo-age{font-size:10.5px;color:var(--orange);background:var(--orange-soft);padding:1px 7px;border-radius:20px;white-space:nowrap;margin-top:1px;font-weight:500;}
+.todo-del{border:none;background:none;color:var(--muted);font-size:15px;line-height:1;padding:2px 4px;border-radius:4px;opacity:0;transition:opacity .12s;}
+.todo-item:hover .todo-del{opacity:1;}
+.todo-del:hover{color:var(--red);}
+.empty-note{color:var(--muted);font-size:13px;padding:10px 4px;}
+
+/* Assignments */
+.assign-controls{display:flex;gap:8px;flex-wrap:wrap;}
+.import-panel{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin:10px 0;}
+.import-panel label{display:block;font-size:11.5px;font-weight:500;color:var(--muted);margin-bottom:6px;}
+.import-panel textarea{width:100%;border:1px solid var(--line-strong);border-radius:var(--radius-sm);padding:8px 10px;font-family:ui-monospace,monospace;font-size:12px;background:var(--card);resize:vertical;}
+.import-panel textarea:focus{outline:none;border-color:var(--accent);}
+.import-actions{display:flex;align-items:center;gap:8px;margin-top:9px;flex-wrap:wrap;}
+.import-msg{font-size:11.5px;color:var(--muted);}
+.table-wrap{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);margin-top:10px;overflow:hidden;}
+.table-wrap.condensed .table-scroll{max-height:380px;overflow-y:auto;}
+.table-scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;min-width:640px;}
+thead th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;}
+tbody td{padding:8px 12px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle;}
+tbody tr:hover td{background:var(--bg);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr.done td{color:var(--muted);}
+tbody tr.done .cell-name{text-decoration:line-through;}
+tbody tr.overdue td{color:var(--red);}
+td.col-check{width:32px;}
+td input[type=text],td input[type=date],td select{width:100%;border:1px solid transparent;background:transparent;padding:5px 7px;border-radius:var(--radius-sm);font-size:13px;color:var(--ink);}
+td input[type=text]:hover,td input[type=date]:hover,td select:hover{border-color:var(--line-strong);}
+td input[type=text]:focus,td input[type=date]:focus,td select:focus{border-color:var(--accent);outline:none;background:var(--card);}
+td select{cursor:pointer;}
+.due-soon{color:var(--orange);font-weight:500;}
+.row-del{border:none;background:none;color:var(--muted);font-size:14px;border-radius:4px;opacity:0;transition:opacity .12s;}
+tr:hover .row-del{opacity:1;}
+.row-del:hover{color:var(--red);}
+td.col-del{width:26px;text-align:center;}
+
+/* Notes */
+.note-card{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;transition:border-color .12s;}
+.note-card:hover{border-color:var(--line-strong);}
+.note-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.note-title-input{border:none;background:transparent;font-family:'Inter',sans-serif;font-size:14.5px;font-weight:600;width:100%;padding:2px 0;}
+.note-title-input:focus{outline:none;}
+.note-body{width:100%;border:none;background:transparent;resize:vertical;min-height:54px;font-size:13px;line-height:1.6;padding:2px 0;color:var(--ink);}
+.note-body:focus{outline:none;}
+.note-del{border:none;background:none;color:var(--muted);font-size:11.5px;opacity:0;transition:opacity .12s;}
+.note-card:hover .note-del{opacity:1;}
+.note-del:hover{color:var(--red);}
+
+/* Cover image */
+.cover{
+  position:relative;
+  height:150px;
+  border-radius:var(--radius);
+  background:var(--bg) center/cover no-repeat;
+  border:1px solid var(--line);
+  margin-bottom:14px;
+  display:flex;align-items:flex-end;justify-content:flex-end;
+  overflow:hidden;
+}
+.cover.empty{
+  display:flex;align-items:center;justify-content:center;
+  border:1.5px dashed var(--line-strong);
+  background:var(--card);
+}
+.cover.empty .cover-empty-label{color:var(--muted);font-size:13px;}
+.cover-edit-btn{
+  margin:10px;padding:6px 11px;font-size:12px;font-weight:500;
+  background:rgba(255,255,255,.92);border:1px solid var(--line-strong);border-radius:var(--radius-sm);color:var(--ink);
+  box-shadow:var(--shadow);
+}
+.cover-edit-btn:hover{background:#fff;}
+
+/* Settings */
+.top-actions{display:flex;align-items:center;gap:8px;}
+.icon-btn{
+  width:32px;height:32px;border-radius:var(--radius-sm);border:1px solid var(--line-strong);
+  background:var(--card);display:flex;align-items:center;justify-content:center;font-size:15px;
+}
+.icon-btn:hover{background:var(--bg);}
+.width-toggle{
+  border:1px solid var(--line-strong);background:var(--card);color:var(--muted);
+  width:24px;height:24px;border-radius:5px;font-size:11px;display:flex;align-items:center;justify-content:center;
+}
+.width-toggle:hover{background:var(--bg);color:var(--ink);}
+.settings-popover{
+  position:absolute;top:56px;right:32px;z-index:50;
+  width:290px;max-height:80vh;overflow-y:auto;
+  background:var(--card);border:1px solid var(--line-strong);border-radius:var(--radius);
+  box-shadow:var(--shadow-hover);padding:16px;display:none;
+}
+.settings-popover.open{display:block;}
+.settings-popover h3{font-size:12.5px;font-weight:600;margin-bottom:9px;}
+.settings-section{margin-bottom:16px;}
+.settings-section:last-child{margin-bottom:0;}
+.palette-row{display:flex;gap:8px;flex-wrap:wrap;}
+.swatch{
+  width:34px;height:34px;border-radius:50%;border:2px solid transparent;
+  display:flex;cursor:pointer;overflow:hidden;
+}
+.swatch span{flex:1;}
+.swatch.active{border-color:var(--ink);}
+.custom-colors{display:flex;gap:10px;margin-top:10px;}
+.custom-colors label{font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:4px;align-items:center;}
+.custom-colors input[type=color]{width:34px;height:28px;border:1px solid var(--line-strong);border-radius:4px;padding:0;background:none;}
+.cover-input-row{display:flex;gap:6px;margin-top:8px;}
+.cover-input-row input[type=text]{flex:1;padding:6px 8px;font-size:12px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);}
+.settings-reset{font-size:11.5px;color:var(--muted);background:none;border:none;text-decoration:underline;padding:0;margin-top:4px;}
+.settings-reset:hover{color:var(--red);}
+.option-row{display:flex;gap:7px;flex-wrap:wrap;}
+.option-btn{
+  border:1px solid var(--line-strong);background:var(--card);color:var(--ink);
+  padding:6px 11px;border-radius:var(--radius-sm);font-size:12px;
+}
+.option-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);}
+.option-btn:hover{border-color:var(--accent);}
+.radius-slider{width:100%;margin-top:6px;}
+.panel-visibility-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:12.5px;}
+.panel-visibility-row label{display:flex;align-items:center;gap:8px;cursor:pointer;}
+.add-widget-card{
+  align-items:center;justify-content:flex-start;
+  border:1.5px dashed var(--line-strong);box-shadow:none;background:transparent;
+  order:9999;
+}
+#add-widget-btn{width:100%;}
+.add-widget-form{display:none;margin-top:12px;width:100%;}
+.add-widget-form.open{display:block;}
+.widget-type-btn{
+  border:1px solid var(--line-strong);background:var(--card);color:var(--ink);
+  padding:6px 11px;border-radius:var(--radius-sm);font-size:12px;
+}
+.widget-type-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);}
+.widget-input-group label{display:block;font-size:11.5px;font-weight:500;color:var(--muted);margin-bottom:5px;margin-top:10px;}
+.widget-input-group input[type=text]{width:100%;padding:7px 9px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--card);font-size:12.5px;}
+.widget-input-group input[type=text]:focus{outline:none;border-color:var(--accent);}
+.panel-emoji{cursor:text;outline:none;border-radius:4px;padding:0 2px;}
+.panel-emoji:hover,.panel-emoji:focus{background:var(--accent-soft);}
+.panel-title-text{cursor:text;outline:none;border-radius:4px;padding:0 3px;}
+.panel-title-text:hover,.panel-title-text:focus{background:var(--accent-soft);}
+[data-theme="dark"] .cover.empty{background:var(--card);}
+
+@media (max-width:900px){
+  .panel[data-span="1"],.panel[data-span="2"]{width:100%;resize:none;}
+  body{padding:16px 14px 30px;}
+}
+</style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+<div class="cover empty" id="cover-box">
+  <span class="cover-empty-label" id="cover-empty-label">No cover image yet</span>
+  <button class="cover-edit-btn" id="cover-edit-btn">Add cover</button>
+</div>
+
+<div class="top">
+  <h1>🗂️ Desk</h1>
+  <div class="top-actions">
+    <div class="today" id="today-flag"></div>
+    <button class="icon-btn" id="settings-btn" title="Customize">⚙️</button>
+  </div>
+</div>
+
+<div class="settings-popover" id="settings-popover">
+  <div class="settings-section">
+    <h3>Appearance</h3>
+    <div class="option-row" id="mode-row">
+      <button class="option-btn" data-mode="light">☀️ Light</button>
+      <button class="option-btn" data-mode="dark">🌙 Dark</button>
+    </div>
+  </div>
+  <div class="settings-section">
+    <h3>Font</h3>
+    <div class="option-row" id="font-row">
+      <button class="option-btn" data-font="sans" style="font-family:'Inter',sans-serif;">Sans</button>
+      <button class="option-btn" data-font="serif" style="font-family:'Source Serif 4',serif;">Serif</button>
+      <button class="option-btn" data-font="mono" style="font-family:'JetBrains Mono',monospace;">Mono</button>
+    </div>
+  </div>
+  <div class="settings-section">
+    <h3>Corner style</h3>
+    <input type="range" class="radius-slider" id="radius-slider" min="0" max="20" step="1">
+  </div>
+  <div class="settings-section">
+    <h3>Color palette</h3>
+    <div class="palette-row" id="palette-row"></div>
+    <div class="custom-colors">
+      <label>Accent<input type="color" id="custom-accent"></label>
+      <label>Background<input type="color" id="custom-bg"></label>
+      <label>Cards<input type="color" id="custom-card"></label>
+    </div>
+  </div>
+  <div class="settings-section">
+    <h3>Cover image</h3>
+    <div class="cover-input-row">
+      <input type="text" id="cover-url-input" placeholder="Paste an image URL">
+      <button class="btn small" id="cover-url-btn">Set</button>
+    </div>
+    <div class="cover-input-row">
+      <button class="btn ghost small" id="cover-upload-btn">Upload image</button>
+      <button class="btn ghost small" id="cover-remove-btn">Remove</button>
+    </div>
+    <div class="import-msg" id="cover-upload-msg"></div>
+    <input type="file" id="cover-file-input" accept="image/*" style="display:none;">
+  </div>
+  <div class="settings-section">
+    <h3>Panels</h3>
+    <div id="panel-visibility-list"></div>
+    <div class="sub" style="margin-top:6px;">Drag any panel by its ⋮⋮ handle to reorder. Click a panel's icon or title to rename it.</div>
+  </div>
+  <div class="settings-section">
+    <button class="settings-reset" id="reset-appearance-btn">Reset appearance to default</button>
+  </div>
+</div>
+
+<div class="dashboard">
+
+  <!-- CALENDAR -->
+  <div class="panel" id="panel-cal" data-panel-id="cal" data-span="1">
+    <div class="panel-head">
+      <div><h2><span class="drag-handle">⋮⋮</span><span class="panel-emoji" contenteditable="true" spellcheck="false" data-panel-id="cal">📅</span> <span class="panel-title-text" contenteditable="true" spellcheck="false" data-panel-id="cal">Calendar</span></h2><div class="sub" id="cal-sub">Synced from your Google account</div></div>
+      <div class="assign-controls">
+        <button class="width-toggle" data-panel-id="cal" title="Toggle width">⤢</button>
+        <div class="option-row">
+          <button class="option-btn" id="cal-view-month">Month</button>
+          <button class="option-btn" id="cal-view-week">Week</button>
+          <button class="option-btn" id="cal-view-day">Day</button>
+        </div>
+      </div>
+    </div>
+    <div class="cal-month-nav" id="cal-month-nav">
+      <button class="icon-btn small-icon" id="cal-prev-btn">‹</button>
+      <div class="cal-month-label" id="cal-month-label"></div>
+      <button class="icon-btn small-icon" id="cal-next-btn">›</button>
+      <button class="btn ghost small" id="cal-today-btn">Today</button>
+    </div>
+    <div class="cal-zoom-row" id="cal-zoom-row">
+      <button class="icon-btn small-icon" id="cal-zoom-out" title="Shrink rows">－</button>
+      <input type="range" id="cal-zoom-slider" min="12" max="60" step="2">
+      <button class="icon-btn small-icon" id="cal-zoom-in" title="Grow rows">＋</button>
+      <button class="btn ghost small" id="cal-fit-day-btn">Fit whole day</button>
+      <button class="btn ghost small" id="cal-toggle-allday-btn">Hide all-day</button>
+    </div>
+    <div class="panel-scroll" id="cal-scroll-body">
+      <div id="cal-month-grid"></div>
+      <div id="cal-week-view"></div>
+      <div id="cal-day-view"></div>
+    </div>
+    <details class="cal-alt" open id="cal-live-sync-details">
+      <summary>Live sync with Google Calendar (private sign-in)</summary>
+      <div class="cal-setup">
+        <div class="sub" style="margin-bottom:8px;">
+          Signs in with your own Google account, so your calendars stay private — nothing is made public. This needs the planner
+          hosted at a real web address (not opened as a local file), since Google only allows sign-in from addresses you've registered
+          in advance, plus your own OAuth Client ID from Google Cloud Console.
+        </div>
+        <label for="gcal-client-id">Google OAuth Client ID</label>
+        <div class="cal-row">
+          <input id="gcal-client-id" type="text" placeholder="xxxxxxxxxx.apps.googleusercontent.com">
+        </div>
+        <div class="cal-row" style="margin-top:10px;align-items:center;">
+          <button class="btn small" id="gcal-connect-btn" type="button">Connect Google Calendar</button>
+          <button class="btn ghost small" id="gcal-disconnect-btn" type="button">Disconnect</button>
+        </div>
+        <div id="gcal-calendar-list" style="margin-top:10px;"></div>
+        <div class="cal-row" style="margin-top:10px;align-items:center;">
+          <button class="btn small" id="gcal-sync-btn" type="button">Sync now</button>
+          <span class="sub" id="cal-sync-status"></span>
+        </div>
+      </div>
+    </details>
+    <details class="cal-alt">
+      <summary>Use an embed link instead</summary>
+      <div class="cal-setup">
+        <label for="cal-url">Google Calendar embed link</label>
+        <div class="cal-row">
+          <input id="cal-url" type="text" placeholder="Paste your embed URL or address here">
+          <button class="btn ghost small" id="cal-save">Save</button>
+        </div>
+      </div>
+      <div id="cal-display"></div>
+    </details>
+    <details class="cal-alt">
+      <summary>Calendar colors</summary>
+      <div class="cal-setup" id="cal-color-list"></div>
+    </details>
+  </div>
+
+  <!-- TODO -->
+  <div class="panel" id="panel-todo" data-panel-id="todo" data-span="1">
+    <div class="panel-head">
+      <div><h2><span class="drag-handle">⋮⋮</span><span class="panel-emoji" contenteditable="true" spellcheck="false" data-panel-id="todo">✅</span> <span class="panel-title-text" contenteditable="true" spellcheck="false" data-panel-id="todo">To-do</span></h2><div class="sub" id="todo-date-label"></div></div>
+      <button class="width-toggle" data-panel-id="todo" title="Toggle width">⤢</button>
+    </div>
+    <div class="todo-add">
+      <input id="todo-input" type="text" placeholder="Add a task and press Enter">
+      <button class="btn small" id="todo-add-btn">Add</button>
+    </div>
+    <div class="panel-scroll"><ul class="todo-list" id="todo-list"></ul></div>
+  </div>
+
+  <!-- ASSIGNMENTS -->
+  <div class="panel" id="panel-assign" data-panel-id="assign" data-span="2">
+    <div class="panel-head">
+      <div><h2><span class="drag-handle">⋮⋮</span><span class="panel-emoji" contenteditable="true" spellcheck="false" data-panel-id="assign">📚</span> <span class="panel-title-text" contenteditable="true" spellcheck="false" data-panel-id="assign">Assignments</span></h2><div class="sub">Everything you're tracking, in one table</div></div>
+      <div class="assign-controls">
+        <button class="width-toggle" data-panel-id="assign" title="Toggle width">⤢</button>
+        <button class="btn ghost small" id="condense-toggle">Condense</button>
+        <button class="btn ghost small" id="import-toggle">Import from link</button>
+        <button class="btn small" id="assign-add-btn">+ Add assignment</button>
+      </div>
+    </div>
+    <div class="import-panel" id="import-panel" style="display:none;">
+      <label>Paste a table (markdown, or lines of "Assignment, Due Date, Subject, Type")</label>
+      <textarea id="import-text" rows="6" placeholder="Paste your table text here"></textarea>
+      <div class="import-actions">
+        <button class="btn small" id="import-append-btn">Add to table</button>
+        <button class="btn ghost small" id="import-replace-btn">Replace table</button>
+        <button class="btn ghost small" id="import-cancel-btn">Cancel</button>
+        <span class="import-msg" id="import-msg"></span>
+      </div>
+    </div>
+    <div class="table-wrap" id="table-wrap">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-check"></th>
+              <th>Assignment</th>
+              <th>Due date</th>
+              <th>Subject</th>
+              <th>Type</th>
+              <th class="col-del"></th>
+            </tr>
+          </thead>
+          <tbody id="assign-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="panel" id="panel-notes" data-panel-id="notes" data-span="2">
+    <div class="panel-head">
+      <div><h2><span class="drag-handle">⋮⋮</span><span class="panel-emoji" contenteditable="true" spellcheck="false" data-panel-id="notes">🗒️</span> <span class="panel-title-text" contenteditable="true" spellcheck="false" data-panel-id="notes">Notes</span></h2><div class="sub">Loose thoughts, lecture notes, reminders</div></div>
+      <div class="assign-controls">
+        <button class="width-toggle" data-panel-id="notes" title="Toggle width">⤢</button>
+        <button class="btn small" id="note-add-btn">+ New note</button>
+      </div>
+    </div>
+    <div class="panel-scroll" id="notes-list"></div>
+  </div>
+
+  <!-- ADD WIDGET -->
+  <div class="panel add-widget-card" id="add-widget-card">
+    <button class="btn ghost" id="add-widget-btn">+ Add widget</button>
+    <div class="add-widget-form" id="add-widget-form">
+      <div class="option-row">
+        <button class="widget-type-btn active" data-type="image">🖼️ Image</button>
+        <button class="widget-type-btn" data-type="embed">🎵 Music / video</button>
+        <button class="widget-type-btn" data-type="link">🔗 Link</button>
+        <button class="widget-type-btn" data-type="text">📝 Text note</button>
+      </div>
+      <div class="widget-input-group" id="widget-input-image" style="display:block;">
+        <label>Image URL</label>
+        <input type="text" id="widget-image-url" placeholder="https://...">
+        <div class="cover-input-row" style="margin-top:6px;">
+          <button class="btn ghost small" id="widget-image-upload-trigger" type="button">Or upload a file</button>
+        </div>
+        <input type="file" id="widget-image-file" accept="image/*" style="display:none;">
+        <div class="import-msg" id="widget-image-msg"></div>
+        <label style="margin-top:8px;">Caption (optional)</label>
+        <input type="text" id="widget-image-caption" placeholder="A short caption">
+      </div>
+      <div class="widget-input-group" id="widget-input-embed" style="display:none;">
+        <label>Spotify, YouTube, or SoundCloud link</label>
+        <input type="text" id="widget-embed-url" placeholder="Paste a track, playlist, or video link">
+      </div>
+      <div class="widget-input-group" id="widget-input-link" style="display:none;">
+        <label>URL to import</label>
+        <input type="text" id="widget-link-url" placeholder="https://...">
+        <label style="margin-top:8px;">Label (optional)</label>
+        <input type="text" id="widget-link-label" placeholder="What to call this link">
+      </div>
+      <div class="widget-input-group" id="widget-input-text" style="display:none;">
+        <div class="sub">Adds an empty text note block you can type into.</div>
+      </div>
+      <div class="import-actions">
+        <button class="btn small" id="widget-add-confirm">Add</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const todayStr = () => {
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+};
+const uid = () => Math.random().toString(36).slice(2,10);
+
+const SEED_CALENDAR_EVENTS = [{"title": "Chapter", "start": "2026-08-31T18:00", "end": "2026-08-31T20:00", "calendar": "ZTA", "allDay": false}, {"title": "NM Lesson 2", "start": "2026-08-31T19:30", "end": "2026-08-31T21:30", "calendar": "ZTA", "allDay": false}, {"title": "ZTA Study Hours", "start": "2026-08-31T21:00", "end": "2026-08-31T21:00", "calendar": "ZTA", "allDay": false}, {"title": "2.1 Master Resume Education Section & Skills Section (Required to Pass) [MGT 2010-090 Fall 2026]", "start": "2026-09-01", "end": "2026-09-02", "calendar": "Canvas", "allDay": true}, {"title": "2.2 Master Resume: Accomplishment Statements (Required to pass) [MGT 2010-090 Fall 2026]", "start": "2026-09-01", "end": "2026-09-02", "calendar": "Canvas", "allDay": true}, {"title": "Quiz 1 (Chapter 2) Strategy and IS- Requires Respondus LockDown Browser [IS 3060-004 Fall 2026]", "start": "2026-09-01", "end": "2026-09-02", "calendar": "Canvas", "allDay": true}, {"title": "[IN-CLASS EXERCISE] THE AMAZON OF INNOVATION [IS 3060-004 Fall 2026]", "start": "2026-09-01", "end": "2026-09-02", "calendar": "Canvas", "allDay": true}, {"title": "ZTA Study Hours", "start": "2026-09-01T09:00", "end": "2026-09-01T21:00", "calendar": "ZTA", "allDay": false}, {"title": "MUSC 4450", "start": "2026-09-01T11:50", "end": "2026-09-01T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "Session 3: Chapter 2 - preclass reading [ACCTG 3100-009 Fall 2026]", "start": "2026-09-01T13:00", "end": "2026-09-01T13:00", "calendar": "Canvas", "allDay": false}, {"title": "date with mary", "start": "2026-09-01T16:00", "end": "2026-09-01T17:00", "calendar": "Personal", "allDay": false}, {"title": "S&O host", "start": "2026-09-01T17:00", "end": "2026-09-01T21:30", "calendar": "work", "allDay": false}, {"title": "Quiz B Syllabus [FINAN 3020-090 Fall 2026]", "start": "2026-09-02", "end": "2026-09-03", "calendar": "Canvas", "allDay": true}, {"title": "ZTA Study Hours", "start": "2026-09-02T09:00", "end": "2026-09-02T21:00", "calendar": "ZTA", "allDay": false}, {"title": "MUSC 4450", "start": "2026-09-02T11:50", "end": "2026-09-02T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "S&O market", "start": "2026-09-02T17:00", "end": "2026-09-02T22:00", "calendar": "work", "allDay": false}, {"title": "2.3 Submit Master Resume (Required to Pass) [MGT 2010-090 Fall 2026]", "start": "2026-09-03", "end": "2026-09-04", "calendar": "Canvas", "allDay": true}, {"title": "2.4 Packback Resume Goals [MGT 2010-090 Fall 2026]", "start": "2026-09-03", "end": "2026-09-04", "calendar": "Canvas", "allDay": true}, {"title": "ZTA Study Hours", "start": "2026-09-03T09:00", "end": "2026-09-03T20:00", "calendar": "ZTA", "allDay": false}, {"title": "Session 4: Chapter 2 - preclass reading [ACCTG 3100-009 Fall 2026]", "start": "2026-09-03T13:00", "end": "2026-09-03T13:00", "calendar": "Canvas", "allDay": false}, {"title": "Chapter 1: HW Assignment [ACCTG 3100-009 Fall 2026]", "start": "2026-09-03T13:00", "end": "2026-09-03T13:00", "calendar": "Canvas", "allDay": false}, {"title": "football call time", "start": "2026-09-03T14:00", "end": "2026-09-03T19:00", "calendar": "Marching Band", "allDay": false}, {"title": "dry weekend", "start": "2026-09-04", "end": "2026-09-07", "calendar": "Personal", "allDay": true}, {"title": "ZTA Study Hours", "start": "2026-09-04T09:00", "end": "2026-09-04T20:00", "calendar": "ZTA", "allDay": false}, {"title": "Big Sister Service (Big/Little Reveal)", "start": "2026-09-04T17:00", "end": "2026-09-04T19:00", "calendar": "ZTA", "allDay": false}, {"title": "S&O market", "start": "2026-09-05T11:00", "end": "2026-09-05T17:00", "calendar": "work", "allDay": false}, {"title": "Proctoring Enabled: Quiz 1 [OSC 3440-012 Fall 2026]", "start": "2026-09-06", "end": "2026-09-07", "calendar": "Canvas", "allDay": true}, {"title": "Career Survey [IS 3060-004 Fall 2026]", "start": "2026-09-06", "end": "2026-09-07", "calendar": "Canvas", "allDay": true}, {"title": "Tell us 'About You' [STUDENT INTRODUCTION] [IS 3060-004 Fall 2026]", "start": "2026-09-06", "end": "2026-09-07", "calendar": "Canvas", "allDay": true}, {"title": "Chapter 2 Roleplay: Competing Boutique [OPTIONAL] [IS 3060-004 Fall 2026]", "start": "2026-09-06", "end": "2026-09-07", "calendar": "Canvas", "allDay": true}, {"title": "Customizing Your Class Learning Outcomes [IS 3060-004 Fall 2026]", "start": "2026-09-06", "end": "2026-09-07", "calendar": "Canvas", "allDay": true}, {"title": "GITHUB PORTFOLIO SETUP [IS 3060-004 Fall 2026]", "start": "2026-09-06", "end": "2026-09-07", "calendar": "Canvas", "allDay": true}, {"title": "Group Project Proposal (This is where you submit your project. Score will not be posted to gradebook) [IS 3060-004 Fall 2026]", "start": "2026-09-06", "end": "2026-09-07", "calendar": "Canvas", "allDay": true}, {"title": "Lab 1: Brand Strategy and Social Media Analytics [IS 3060-004 Fall 2026]", "start": "2026-09-06", "end": "2026-09-07", "calendar": "Canvas", "allDay": true}, {"title": "Proposal Peer Evaluation (this is where you rate team members and get your final grade for the group assignment) [IS 3060-004 Fall 2026]", "start": "2026-09-06", "end": "2026-09-07", "calendar": "Canvas", "allDay": true}, {"title": "remove ring", "start": "2026-09-06", "end": "2026-09-07", "calendar": "Personal", "allDay": true}, {"title": "PC Paper Meeting", "start": "2026-09-07T19:30", "end": "2026-09-07T21:30", "calendar": "ZTA", "allDay": false}, {"title": "3.2 Target Resume: Find Handshake Opportunities & Make Highlights [MGT 2010-090 Fall 2026]", "start": "2026-09-08", "end": "2026-09-09", "calendar": "Canvas", "allDay": true}, {"title": "3.1 Introduction to Handshake & Updating Your Profile [MGT 2010-090 Fall 2026]", "start": "2026-09-08", "end": "2026-09-09", "calendar": "Canvas", "allDay": true}, {"title": "3.3 Target Resume #1 (Required to Pass) [MGT 2010-090 Fall 2026]", "start": "2026-09-08", "end": "2026-09-09", "calendar": "Canvas", "allDay": true}, {"title": "Quiz 2 (Chapter 3) Business Intelligence Systems- Requires Respondus LockDown Browser [IS 3060-004 Fall 2026]", "start": "2026-09-08", "end": "2026-09-09", "calendar": "Canvas", "allDay": true}, {"title": "MUSC 4450", "start": "2026-09-08T11:50", "end": "2026-09-08T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "MUSC 4450", "start": "2026-09-09T11:50", "end": "2026-09-09T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "global entry interview", "start": "2026-09-09T14:30", "end": "2026-09-09T15:30", "calendar": "Personal", "allDay": false}, {"title": "3.5 Cover Letter (Required to Pass) [MGT 2010-090 Fall 2026]", "start": "2026-09-10", "end": "2026-09-11", "calendar": "Canvas", "allDay": true}, {"title": "3.4 Packback Networking & Your Personal Knowledge Gaps [MGT 2010-090 Fall 2026]", "start": "2026-09-10", "end": "2026-09-11", "calendar": "Canvas", "allDay": true}, {"title": "MUSC 4450", "start": "2026-09-10T11:50", "end": "2026-09-10T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "Session 5: Chapter 4 - preclass reading [ACCTG 3100-009 Fall 2026]", "start": "2026-09-10T13:00", "end": "2026-09-10T13:00", "calendar": "Canvas", "allDay": false}, {"title": "Chapter 2: HW Assignment [ACCTG 3100-009 Fall 2026]", "start": "2026-09-10T13:00", "end": "2026-09-10T13:00", "calendar": "Canvas", "allDay": false}, {"title": "MUSC 4450", "start": "2026-09-11T11:50", "end": "2026-09-11T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "Proctoring Enabled: Quiz 2 [OSC 3440-012 Fall 2026]", "start": "2026-09-13", "end": "2026-09-14", "calendar": "Canvas", "allDay": true}, {"title": "[Discussion] Data Mining and Consumer Privacy [IS 3060-004 Fall 2026]", "start": "2026-09-13", "end": "2026-09-14", "calendar": "Canvas", "allDay": true}, {"title": "Chapter 3 Roleplay: Tour Tokyo Smarter [OPTIONAL] [IS 3060-004 Fall 2026]", "start": "2026-09-13", "end": "2026-09-14", "calendar": "Canvas", "allDay": true}, {"title": "Lab 2: Tableau BI Data Visualization [IS 3060-004 Fall 2026]", "start": "2026-09-13", "end": "2026-09-14", "calendar": "Canvas", "allDay": true}, {"title": "insert ring", "start": "2026-09-13", "end": "2026-09-14", "calendar": "Personal", "allDay": true}, {"title": "MUSC 4450", "start": "2026-09-14T11:50", "end": "2026-09-14T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "Chapter", "start": "2026-09-14T18:00", "end": "2026-09-14T20:00", "calendar": "ZTA", "allDay": false}, {"title": "NM Lesson 3", "start": "2026-09-14T19:30", "end": "2026-09-14T21:30", "calendar": "ZTA", "allDay": false}, {"title": "4.2 Create/Improve LinkedIn Profile (Takes Time. Plan Ahead!)  [MGT 2010-090 Fall 2026]", "start": "2026-09-15", "end": "2026-09-16", "calendar": "Canvas", "allDay": true}, {"title": "4.1 Elevator Pitch  [MGT 2010-090 Fall 2026]", "start": "2026-09-15", "end": "2026-09-16", "calendar": "Canvas", "allDay": true}, {"title": "Quiz 3 (Chapter 4) Hardware, Software and Mobile- Requires Respondus LockDown Browser [IS 3060-004 Fall 2026]", "start": "2026-09-15", "end": "2026-09-16", "calendar": "Canvas", "allDay": true}, {"title": "[IN-CLASS EXERCISE] NVIDIA Case Study [IS 3060-004 Fall 2026]", "start": "2026-09-15", "end": "2026-09-16", "calendar": "Canvas", "allDay": true}, {"title": "MUSC 4450", "start": "2026-09-15T11:50", "end": "2026-09-15T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "Session 6: Chapter 5 - preclass reading [ACCTG 3100-009 Fall 2026]", "start": "2026-09-15T13:00", "end": "2026-09-15T13:00", "calendar": "Canvas", "allDay": false}, {"title": "MUSC 4450", "start": "2026-09-16T11:50", "end": "2026-09-16T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "4.3 Handshake: Employers & Events [MGT 2010-090 Fall 2026]", "start": "2026-09-17", "end": "2026-09-18", "calendar": "Canvas", "allDay": true}, {"title": "4.4 Packback Researching Companies & Organizations [MGT 2010-090 Fall 2026]", "start": "2026-09-17", "end": "2026-09-18", "calendar": "Canvas", "allDay": true}, {"title": "MUSC 4450", "start": "2026-09-17T11:50", "end": "2026-09-17T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "MUSC 4450", "start": "2026-09-18T11:50", "end": "2026-09-18T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "Proctoring Enabled: Quiz 3 [OSC 3440-012 Fall 2026]", "start": "2026-09-20", "end": "2026-09-21", "calendar": "Canvas", "allDay": true}, {"title": "Chapter 4 Roleplay: Scaling a Smart 3D Studio in NYC [REQUIRED] [IS 3060-004 Fall 2026]", "start": "2026-09-20", "end": "2026-09-21", "calendar": "Canvas", "allDay": true}, {"title": "Lab 3: Mobile App Using Thunkable [IS 3060-004 Fall 2026]", "start": "2026-09-20", "end": "2026-09-21", "calendar": "Canvas", "allDay": true}, {"title": "ben's bday", "start": "2026-09-20", "end": "2026-09-21", "calendar": "Personal", "allDay": true}, {"title": "MUSC 4450", "start": "2026-09-21T11:50", "end": "2026-09-21T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "Chapter", "start": "2026-09-21T18:00", "end": "2026-09-21T20:00", "calendar": "ZTA", "allDay": false}, {"title": "PC Meeting", "start": "2026-09-21T19:30", "end": "2026-09-21T21:30", "calendar": "ZTA", "allDay": false}, {"title": "NM Lesson 4", "start": "2026-09-21T19:30", "end": "2026-09-21T21:30", "calendar": "ZTA", "allDay": false}, {"title": "5.1 Networking & Professionalism [MGT 2010-090 Fall 2026]", "start": "2026-09-22", "end": "2026-09-23", "calendar": "Canvas", "allDay": true}, {"title": "5.2 Informational Interviews: My Informational Interview Needs [MGT 2010-090 Fall 2026]", "start": "2026-09-22", "end": "2026-09-23", "calendar": "Canvas", "allDay": true}, {"title": "Quiz 4 (Chapter 5) Take Home: Database Processing- Requires Respondus LockDown Browser [IS 3060-004 Fall 2026]", "start": "2026-09-22", "end": "2026-09-23", "calendar": "Canvas", "allDay": true}, {"title": "[IN-CLASS EXERCISE] THE STARTUP DATA DILEMMA [IS 3060-004 Fall 2026]", "start": "2026-09-22", "end": "2026-09-23", "calendar": "Canvas", "allDay": true}, {"title": "MUSC 4450", "start": "2026-09-22T11:50", "end": "2026-09-22T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "Chapter 4 and 5 (Cost Behavior): HW Assignment [ACCTG 3100-009 Fall 2026]", "start": "2026-09-22T13:00", "end": "2026-09-22T13:00", "calendar": "Canvas", "allDay": false}, {"title": "MUSC 4450", "start": "2026-09-23T11:50", "end": "2026-09-23T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "Tooelle/Brighton HS performance", "start": "2026-09-23T18:30", "end": "2026-09-23T22:30", "calendar": "Marching Band", "allDay": false}, {"title": "5.3 Informational Interview Recording #1 [MGT 2010-090 Fall 2026]", "start": "2026-09-24", "end": "2026-09-25", "calendar": "Canvas", "allDay": true}, {"title": "MUSC 4450", "start": "2026-09-24T11:50", "end": "2026-09-24T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "MUSC 4450", "start": "2026-09-25T11:50", "end": "2026-09-25T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "RSL game performance", "start": "2026-09-26T17:15", "end": "2026-09-26T18:15", "calendar": "Marching Band", "allDay": false}, {"title": "Homework 1: CI and Hyp Testing Review [OSC 3440-012 Fall 2026]", "start": "2026-09-27", "end": "2026-09-28", "calendar": "Canvas", "allDay": true}, {"title": "Homework 2: Two-Sample Hypothesis Tests [OSC 3440-012 Fall 2026]", "start": "2026-09-27", "end": "2026-09-28", "calendar": "Canvas", "allDay": true}, {"title": "Homework 3: One-Way ANOVA [OSC 3440-012 Fall 2026]", "start": "2026-09-27", "end": "2026-09-28", "calendar": "Canvas", "allDay": true}, {"title": "Homework 4: Two-Way ANOVA [OSC 3440-012 Fall 2026]", "start": "2026-09-27", "end": "2026-09-28", "calendar": "Canvas", "allDay": true}, {"title": "Proctoring Enabled: Exam 1 [OSC 3440-012 Fall 2026]", "start": "2026-09-27", "end": "2026-09-28", "calendar": "Canvas", "allDay": true}, {"title": "LAB 4: AI-Assisted Database Investigation \u2013 Solving the SQL Murder Mystery [IS 3060-004 Fall 2026]", "start": "2026-09-27", "end": "2026-09-28", "calendar": "Canvas", "allDay": true}, {"title": "Chapter 5 Roleplay: DB for Web Toon StartUp [OPTIONAL] [IS 3060-004 Fall 2026]", "start": "2026-09-27", "end": "2026-09-28", "calendar": "Canvas", "allDay": true}, {"title": "dry week", "start": "2026-09-28", "end": "2026-10-06", "calendar": "Personal", "allDay": true}, {"title": "Zeta Week", "start": "2026-09-28", "end": "2026-09-29", "calendar": "ZTA", "allDay": true}, {"title": "MUSC 4450", "start": "2026-09-28T11:50", "end": "2026-09-28T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "Chapter", "start": "2026-09-28T18:00", "end": "2026-09-28T20:00", "calendar": "ZTA", "allDay": false}, {"title": "NM Lesson 5 and Initiation Test", "start": "2026-09-28T19:30", "end": "2026-09-28T21:30", "calendar": "ZTA", "allDay": false}, {"title": "6.2 Informational Interview Preparation Assignment: Outreach [MGT 2010-090 Fall 2026]", "start": "2026-09-29", "end": "2026-09-30", "calendar": "Canvas", "allDay": true}, {"title": "6.1 Finishing Your LinkedIn Profile [MGT 2010-090 Fall 2026]", "start": "2026-09-29", "end": "2026-09-30", "calendar": "Canvas", "allDay": true}, {"title": "Quiz 5 (Chapter 6) The Cloud- Requires Respondus LockDown Browser [IS 3060-004 Fall 2026]", "start": "2026-09-29", "end": "2026-09-30", "calendar": "Canvas", "allDay": true}, {"title": "[IN-CLASS EXERCISE] SALESFORCE CRM CASE STUDY [IS 3060-004 Fall 2026]", "start": "2026-09-29", "end": "2026-09-30", "calendar": "Canvas", "allDay": true}, {"title": "Zeta Week", "start": "2026-09-29", "end": "2026-09-30", "calendar": "ZTA", "allDay": true}, {"title": "MUSC 4450", "start": "2026-09-29T11:50", "end": "2026-09-29T13:45", "calendar": "Marching Band", "allDay": false}, {"title": "Session 9: Chapter 5 - preclass reading [ACCTG 3100-009 Fall 2026]", "start": "2026-09-29T13:00", "end": "2026-09-29T13:00", "calendar": "Canvas", "allDay": false}, {"title": "Zeta Week", "start": "2026-09-30", "end": "2026-10-01", "calendar": "ZTA", "allDay": true}, {"title": "MUSC 4450", "start": "2026-09-30T11:50", "end": "2026-09-30T13:45", "calendar": "Marching Band", "allDay": false}];
+const SEED_SYNCED_AT = "2026-09-02T12:00:00Z";
+
+function seedAssignments(){
+  const rows = [
+    ['Preclass Reading','2026-08-27','ACCTG 3100','Preclass Reading',true],
+    ['Connect Orientation','2026-08-27','ACCTG 3100','Assignment',true],
+    ['In Class Exercise','2026-08-27','IS 3060','Assignment',true],
+    ['Quiz C','2026-08-30','FINANCE 3020','Quiz',true],
+    ['Quiz 1','2026-08-30','FINANCE 3020','Quiz',true],
+    ['Refresher Relay','2026-08-30','OSC 3440','Assignment',true],
+    ['Brain Buzz','2026-08-30','OSC 3440','Assignment',true],
+    ['AI Quiz','2026-08-30','IS 3060','Quiz',true],
+    ['Chapter 1 Roleplay','2026-08-30','IS 3060','Assignment',true],
+    ['Learning Outcomes','2026-08-30','IS 3060','Extra Credit',true],
+    ['Career Progression','2026-08-30','MGT 2010','Assignment',true],
+    ['Wandering Map','2026-08-31','MGT 2010','Packback',true],
+    ['Resume Quiz','2026-08-31','MGT 2010','Quiz',true],
+    ['Resume Header','2026-08-31','MGT 2010','Assignment',true],
+    ['Resume Prep','2026-08-31','MGT 2010','Assignment',true],
+    ['Preclass Reading','2026-08-31','ACCTG 3100','Preclass Reading',true],
+    ['Quiz 1','2026-09-01','IS 3060','Quiz',true],
+    ['Resume Ed & Skills','2026-09-01','MGT 2010','Assignment',false],
+    ['Resume Accomplishment Statements','2026-09-01','MGT 2010','Assignment',false],
+    ['Preclass Reading','2026-09-02','ACCTG 3100','Preclass Reading',false],
+    ['CH 1 HW','2026-09-03','ACCTG 3100','Homework',false],
+    ['Submit Master Resume','2026-09-03','MGT 2010','Assignment',false],
+    ['Packback Resume Goals','2026-09-03','MGT 2010','Assignment',false],
+    ['Quiz 1','2026-09-06','OSC 3440','Quiz',false],
+    ['Lab 1','2026-09-06','IS 3060','Lab',false],
+    ['Chapter 2 Roleplay','2026-09-06','IS 3060','Assignment',false],
+    ['Group Project Proposal','2026-09-06','IS 3060','Group Project',false],
+    ['Github Portfolio Set Up','2026-09-06','IS 3060','Assignment',false],
+    ['Module 1','2026-09-06','FINANCE 3020','Module',false],
+    ['Module 2','2026-09-06','FINANCE 3020','Module',false],
+    ['Chapter 2 HW','2026-09-10','ACCTG 3100','Homework',false]
+  ];
+  return rows.map(r=>({id:uid(), name:r[0], due:r[1], subject:r[2], type:r[3], done:r[4]}));
+}
+
+const DEFAULT_THEME = { accent:'#2F80ED', bg:'#F7F7F5', card:'#FFFFFF' };
+const PALETTES = [
+  { id:'notion', name:'Default', accent:'#2F80ED', bg:'#F7F7F5', card:'#FFFFFF' },
+  { id:'sunset', name:'Sunset',  accent:'#D9730D', bg:'#FBF3EA', card:'#FFFFFF' },
+  { id:'sage',   name:'Sage',    accent:'#2E9E6D', bg:'#F2F7F3', card:'#FFFFFF' },
+  { id:'lavender', name:'Lavender', accent:'#8A6FD9', bg:'#F5F2FC', card:'#FFFFFF' },
+  { id:'blush',  name:'Blush',   accent:'#E0538A', bg:'#FCF1F5', card:'#FFFFFF' },
+  { id:'charcoal', name:'Charcoal', accent:'#5B6EA8', bg:'#EDEEF1', card:'#FFFFFF' }
+];
+
+let state = {
+  calendarUrl: '',
+  calendarView: 'month',
+  calendarViewedMonth: (()=>{ const n=new Date(); return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0'); })(),
+  calendarViewedWeekStart: getWeekStart(todayStr()),
+  selectedDay: todayStr(),
+  googleOAuthClientId: '',
+  googleCalendarSelections: {},
+  calendarColors: {},
+  calendarHourHeight: 40,
+  calendarHideAllDay: false,
+  calendarEvents: { fetchedAt: SEED_SYNCED_AT, events: SEED_CALENDAR_EVENTS },
+  todos: [],
+  assignments: seedAssignments(),
+  assignmentSubjects: ['ACCTG 3100','FINANCE 3020','IS 3060','MGT 2010','OSC 3440'],
+  assignmentTypes: ['Assignment','Preclass Reading','Quiz','Extra Credit','Packback','Homework','Lab','Group Project','Module','Exam','Project','Reading','Presentation','Other'],
+  notes: [],
+  lastOpenDate: todayStr(),
+  condensed: false,
+  theme: Object.assign({}, DEFAULT_THEME),
+  mode: 'light',
+  font: 'sans',
+  radius: 8,
+  coverImage: '',
+  panelOrder: ['cal','todo','assign','notes'],
+  panelSpans: { cal:1, todo:1, assign:2, notes:2 },
+  panelHeights: {},
+  panelWidths: {},
+  panelVisible: { cal:true, todo:true, assign:true, notes:true },
+  panelEmojis: {},
+  panelTitles: {},
+  customWidgets: []
+};
+
+let saveTimer = null;
+const hasClaudeStorage = (typeof window!=='undefined' && window.storage && typeof window.storage.set==='function');
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(save, 400); }
+async function save(){
+  try{
+    if(hasClaudeStorage){
+      await window.storage.set('desk-planner-data', JSON.stringify(state), false);
+    } else {
+      localStorage.setItem('desk-planner-data', JSON.stringify(state));
+    }
+  }
+  catch(e){ console.error('save failed', e); }
+}
+async function load(){
+  try{
+    if(hasClaudeStorage){
+      const res = await window.storage.get('desk-planner-data', false);
+      if(res && res.value){ state = Object.assign(state, JSON.parse(res.value)); }
+    } else {
+      const raw = localStorage.getItem('desk-planner-data');
+      if(raw){ state = Object.assign(state, JSON.parse(raw)); }
+    }
+  }catch(e){ /* first run, nothing saved yet */ }
+  reconcileOptionLists();
+  rollTodos();
+  render();
+  maybeAutoSyncGoogleCalendars();
+}
+function reconcileOptionLists(){
+  if(!Array.isArray(state.assignmentSubjects)) state.assignmentSubjects = [];
+  if(!Array.isArray(state.assignmentTypes)) state.assignmentTypes = [];
+  state.assignments.forEach(a=>{
+    if(a.subject && !state.assignmentSubjects.includes(a.subject)) state.assignmentSubjects.push(a.subject);
+    if(a.type && !state.assignmentTypes.includes(a.type)) state.assignmentTypes.push(a.type);
+  });
+}
+
+function rollTodos(){
+  const today = todayStr();
+  if(state.lastOpenDate !== today){
+    state.todos.forEach(t=>{ if(!t.done) t.currentDate = today; });
+    state.lastOpenDate = today;
+    scheduleSave();
+  }
+}
+function daysBetween(a,b){ return Math.round((new Date(a)-new Date(b))/-86400000)*-1; }
+function escapeHtml(s){ return (s||'').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function escapeAttr(s){ return (s||'').replace(/"/g,'&quot;'); }
+
+/* ---------- Calendar ---------- */
+function extractSrc(input){
+  const m = input.match(/src=["']([^"']+)["']/);
+  if(m) return decodeURIComponent(m[1].replace(/&amp;/g,'&'));
+  return input.trim();
+}
+function renderCalDisplay(){
+  document.getElementById('cal-url').value = state.calendarUrl || '';
+  const disp = document.getElementById('cal-display');
+  disp.innerHTML = state.calendarUrl
+    ? '<div class="cal-frame-wrap"><iframe src="'+state.calendarUrl.replace(/"/g,'&quot;')+'"></iframe></div>'
+    : '';
+}
+document.getElementById('cal-save').addEventListener('click', ()=>{
+  state.calendarUrl = extractSrc(document.getElementById('cal-url').value);
+  renderCalDisplay();
+  scheduleSave();
+});
+
+/* ---------- Live sync: Google Calendar API (private sign-in via OAuth) ---------- */
+let gisTokenClient = null;
+let googleAccessToken = null; // kept in memory only, never persisted
+function renderGcalSettings(){
+  document.getElementById('gcal-client-id').value = state.googleOAuthClientId || '';
+  if(!state.googleCalendarSelections) state.googleCalendarSelections = {};
+}
+document.getElementById('gcal-client-id').addEventListener('input', e=>{ state.googleOAuthClientId = e.target.value; scheduleSave(); });
+function setSyncStatus(msg){
+  const el = document.getElementById('cal-sync-status');
+  if(el) el.textContent = msg;
+}
+function isoLocalFromGoogleDateTime(dtStr){
+  const d = new Date(dtStr);
+  return dateToStr(d) + 'T' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+function ensureGisClient(){
+  const clientId = (state.googleOAuthClientId||'').trim();
+  if(!clientId){ setSyncStatus('Paste your OAuth Client ID first.'); return null; }
+  if(!window.google || !google.accounts || !google.accounts.oauth2){
+    setSyncStatus('Google sign-in library still loading — try again in a second.');
+    return null;
+  }
+  if(!gisTokenClient || gisTokenClient._clientId !== clientId){
+    gisTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: 'https://www.googleapis.com/auth/calendar.readonly',
+      callback: (resp)=>{
+        if(resp.error){ setSyncStatus('Sign-in failed: '+resp.error); return; }
+        googleAccessToken = resp.access_token;
+        setSyncStatus('Signed in — loading your calendars…');
+        loadGoogleCalendarList();
+      }
+    });
+    gisTokenClient._clientId = clientId;
+  }
+  return gisTokenClient;
+}
+document.getElementById('gcal-connect-btn').addEventListener('click', ()=>{
+  const client = ensureGisClient();
+  if(client) client.requestAccessToken({ prompt: googleAccessToken ? '' : 'consent' });
+});
+document.getElementById('gcal-disconnect-btn').addEventListener('click', ()=>{
+  if(googleAccessToken && window.google && google.accounts && google.accounts.oauth2){
+    google.accounts.oauth2.revoke(googleAccessToken, ()=>{});
+  }
+  googleAccessToken = null;
+  document.getElementById('gcal-calendar-list').innerHTML = '';
+  setSyncStatus('Disconnected.');
+});
+async function loadGoogleCalendarList(){
+  if(!googleAccessToken) return;
+  try{
+    const res = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=250', {
+      headers: { Authorization: 'Bearer '+googleAccessToken }
+    });
+    if(!res.ok){ setSyncStatus('Could not load your calendar list (status '+res.status+').'); return; }
+    const data = await res.json();
+    const items = (data.items||[]).filter(c=>c.id);
+    if(!state.googleCalendarSelections) state.googleCalendarSelections = {};
+    items.forEach(c=>{
+      if(!state.googleCalendarSelections[c.id]){
+        state.googleCalendarSelections[c.id] = { label: c.summary || c.id, enabled: !!c.primary };
+      }
+    });
+    renderGcalCalendarList(items);
+    scheduleSave();
+    setSyncStatus('Pick which calendars to sync, then hit "Sync now."');
+  } catch(e){
+    console.error(e);
+    setSyncStatus('Could not load your calendar list — double check your Client ID.');
+  }
+}
+function renderGcalCalendarList(items){
+  const wrap = document.getElementById('gcal-calendar-list');
+  if(!items || items.length===0){ wrap.innerHTML = '<div class="empty-note">No calendars found on this account.</div>'; return; }
+  wrap.innerHTML = items.map(c=>{
+    const sel = state.googleCalendarSelections[c.id] || { label: c.summary||c.id, enabled:false };
+    return '<div class="cal-row gcal-cal-row" data-id="'+escapeAttr(c.id)+'" style="align-items:center;">'
+      + '<input type="checkbox" class="gcal-cal-enable" '+(sel.enabled?'checked':'')+' style="flex:0 0 auto;">'
+      + '<input type="text" class="gcal-cal-label" value="'+escapeAttr(sel.label)+'">'
+      + '</div>';
+  }).join('');
+  wrap.querySelectorAll('.gcal-cal-row').forEach(row=>{
+    const id = row.dataset.id;
+    row.querySelector('.gcal-cal-enable').addEventListener('change', e=>{
+      state.googleCalendarSelections[id].enabled = e.target.checked; scheduleSave();
+    });
+    row.querySelector('.gcal-cal-label').addEventListener('input', e=>{
+      state.googleCalendarSelections[id].label = e.target.value; scheduleSave();
+    });
+  });
+}
+async function syncGoogleCalendars(){
+  if(!googleAccessToken){ setSyncStatus('Connect your Google account first.'); return; }
+  const selected = Object.entries(state.googleCalendarSelections||{}).filter(([id,v])=>v.enabled);
+  if(selected.length===0){ setSyncStatus('Check at least one calendar above, then sync.'); return; }
+  setSyncStatus('Syncing…');
+  const timeMin = new Date(); timeMin.setMonth(timeMin.getMonth()-1);
+  const timeMax = new Date(); timeMax.setMonth(timeMax.getMonth()+6);
+  const allEvents = [];
+  let hadError = false;
+  for(const [id, cfg] of selected){
+    try{
+      const url = 'https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(id)+'/events'
+        + '?singleEvents=true&orderBy=startTime'
+        + '&timeMin='+encodeURIComponent(timeMin.toISOString())
+        + '&timeMax='+encodeURIComponent(timeMax.toISOString())
+        + '&maxResults=2500';
+      const res = await fetch(url, { headers: { Authorization: 'Bearer '+googleAccessToken } });
+      if(!res.ok){ hadError = true; console.error('Sync error for', id, res.status, await res.text()); continue; }
+      const data = await res.json();
+      (data.items||[]).forEach(item=>{
+        if(item.status==='cancelled') return;
+        const allDay = !!(item.start && item.start.date);
+        let start, end;
+        if(allDay){
+          start = item.start.date;
+          end = (item.end && item.end.date) ? item.end.date : start;
+        } else {
+          start = isoLocalFromGoogleDateTime(item.start.dateTime);
+          end = (item.end && item.end.dateTime) ? isoLocalFromGoogleDateTime(item.end.dateTime) : start;
+        }
+        allEvents.push({ title: item.summary || 'Untitled', start, end, allDay, calendar: (cfg.label||'').trim() || id });
+      });
+    } catch(e){
+      hadError = true;
+      console.error('Sync failed for', id, e);
+    }
+  }
+  if(allEvents.length===0 && hadError){
+    setSyncStatus('Sync failed — try reconnecting your Google account.');
+    return;
+  }
+  state.calendarEvents = { fetchedAt: new Date().toISOString(), events: allEvents };
+  reconcileOptionLists();
+  scheduleSave();
+  renderAll();
+  renderSyncLabel();
+  setSyncStatus(hadError ? ('Synced with some errors at '+new Date().toLocaleTimeString()+'.') : ('Synced at '+new Date().toLocaleTimeString()+'.'));
+}
+document.getElementById('gcal-sync-btn').addEventListener('click', syncGoogleCalendars);
+function maybeAutoSyncGoogleCalendars(){
+  // Access tokens aren't persisted, so each new session needs an explicit "Connect" click — nothing to auto-sync yet.
+}
+
+function renderSyncLabel(){
+  const sub = document.getElementById('cal-sub');
+  const data = state.calendarEvents;
+  if(data && data.fetchedAt){
+    const d = new Date(data.fetchedAt);
+    sub.textContent = 'Synced ' + d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+  }
+}
+
+/* ---------- Month grid calendar ---------- */
+const CAL_COLOR_PALETTE = ['#2F80ED','#2E9E6D','#D9730D','#8A6FD9','#E0538A','#5B6EA8','#C0863A','#3F6B5E'];
+function colorForCalendar(name){
+  name = name || 'Other';
+  if(!state.calendarColors) state.calendarColors = {};
+  if(!state.calendarColors[name]){
+    const idx = Object.keys(state.calendarColors).length % CAL_COLOR_PALETTE.length;
+    state.calendarColors[name] = CAL_COLOR_PALETTE[idx];
+    scheduleSave();
+  }
+  return state.calendarColors[name];
+}
+function renderCalColorList(){
+  const wrap = document.getElementById('cal-color-list');
+  if(!wrap) return;
+  const names = Array.from(new Set((state.calendarEvents && state.calendarEvents.events || []).map(e=>e.calendar||'Other')));
+  if(names.length===0){ wrap.innerHTML = '<div class="empty-note">No calendars yet — sync or add events first.</div>'; return; }
+  wrap.innerHTML = names.map(n=>
+    '<div class="cal-color-row" data-name="'+escapeAttr(n)+'">'
+    + '<input type="color" class="cal-color-input" value="'+colorForCalendar(n)+'">'
+    + '<span>'+escapeHtml(n)+'</span>'
+    + '</div>'
+  ).join('');
+  wrap.querySelectorAll('.cal-color-input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const name = e.target.closest('.cal-color-row').dataset.name;
+      state.calendarColors[name] = e.target.value;
+      scheduleSave();
+      renderAll();
+    });
+  });
+}
+function eventsByDayMap(){
+  const map = {};
+  const data = state.calendarEvents;
+  if(data && data.events){
+    data.events.forEach(ev=>{
+      const day = (ev.start||'').slice(0,10);
+      if(!day) return;
+      (map[day] = map[day]||[]).push(ev);
+    });
+  }
+  return map;
+}
+function hourHeight(){ return state.calendarHourHeight || 40; }
+function formatTimeShort(iso){
+  const t = (iso||'').slice(11,16);
+  if(!t) return '';
+  let [h,mnt] = t.split(':').map(Number);
+  const ampm = h>=12 ? 'PM':'AM';
+  h = h%12; if(h===0) h=12;
+  return h + (mnt ? ':'+String(mnt).padStart(2,'0') : '') + ampm;
+}
+function minutesOfDay(iso){
+  const t = (iso||'').slice(11,16);
+  if(!t) return 0;
+  const [h,m] = t.split(':').map(Number);
+  return h*60+(m||0);
+}
+function layoutTimedEvents(evs){
+  // Simple column-packing so overlapping events sit side-by-side instead of stacking.
+  const sorted = evs.slice().sort((a,b)=> a.startMin-b.startMin || a.endMin-b.endMin);
+  const colEnds = [];
+  sorted.forEach(ev=>{
+    let placedCol = -1;
+    for(let i=0;i<colEnds.length;i++){
+      if(colEnds[i] <= ev.startMin){ placedCol = i; break; }
+    }
+    if(placedCol===-1){ placedCol = colEnds.length; colEnds.push(ev.endMin); }
+    else colEnds[placedCol] = ev.endMin;
+    ev._col = placedCol;
+  });
+  const totalCols = colEnds.length || 1;
+  sorted.forEach(ev=>{ ev._totalCols = totalCols; });
+  return sorted;
+}
+function buildNowLineHtml(){
+  const now = new Date();
+  const top = ((now.getHours()*60+now.getMinutes())/60)*hourHeight();
+  return '<div class="cal-now-line" style="top:'+top+'px;"></div>';
+}
+function buildDayColHtml(dStr, evs){
+  const timed = evs.map(ev=>{
+    let startMin = minutesOfDay(ev.start);
+    let endMin = ev.end ? minutesOfDay(ev.end) : startMin;
+    if(endMin<=startMin) endMin = Math.min(startMin+30, 1440);
+    return Object.assign({}, ev, {startMin, endMin});
+  });
+  const laidOut = layoutTimedEvents(timed);
+  const blocksHtml = laidOut.map(ev=>{
+    const top = (ev.startMin/60)*hourHeight();
+    const height = Math.max(((ev.endMin-ev.startMin)/60)*hourHeight(), 16);
+    const widthPct = 100/ev._totalCols, leftPct = ev._col*widthPct;
+    const color = colorForCalendar(ev.calendar);
+    const timeLabel = formatTimeShort(ev.start) + (ev.end && ev.end!==ev.start ? '–'+formatTimeShort(ev.end) : '');
+    return '<div class="cal-event-block" data-date="'+dStr+'" style="top:'+top+'px;height:'+height+'px;left:calc('+leftPct+'% + 1px);width:calc('+widthPct+'% - 2px);background:'+color+';" title="'+escapeAttr((ev.title||'Untitled')+' · '+timeLabel)+'">'
+      + '<span class="cal-event-block-title">'+escapeHtml(ev.title||'Untitled')+'</span>'
+      + (height>=28 ? '<span class="cal-event-block-time">'+timeLabel+'</span>' : '')
+      + '</div>';
+  }).join('');
+  const hourLines = Array.from({length:24}, (_,h)=>'<div class="cal-hour-line" style="top:'+(h*hourHeight())+'px;"></div>').join('');
+  const nowLine = dStr===todayStr() ? buildNowLineHtml() : '';
+  return '<div class="cal-day-col" data-date="'+dStr+'" style="height:'+(24*hourHeight())+'px;">'+hourLines+blocksHtml+nowLine+'</div>';
+}
+function buildTimeGutterInner(){
+  let html = '';
+  for(let h=0;h<24;h++){
+    const label = h===0 ? '12 AM' : h<12 ? h+' AM' : h===12 ? '12 PM' : (h-12)+' PM';
+    html += '<div class="cal-time-label" style="top:'+(h*hourHeight())+'px;">'+label+'</div>';
+  }
+  return html;
+}
+function scrollGridToTime(minutes){
+  const body = document.getElementById('cal-scroll-body');
+  if(!body) return;
+  requestAnimationFrame(()=>{ body.scrollTop = Math.max(0, (minutes/60)*hourHeight() - 80); });
+}
+function renderTimeGridInto(containerId, days){
+  const wrap = document.getElementById(containerId);
+  const byDay = eventsByDayMap();
+  const today = todayStr();
+
+  const headerCells = days.map(d=>{
+    const dStr = dateToStr(d);
+    return '<div class="cal-tg-day-head '+(dStr===today?'today':'')+'" data-date="'+dStr+'">'
+      + '<div class="cal-tg-dow">'+d.toLocaleDateString(undefined,{weekday:'short'})+'</div>'
+      + '<div class="cal-tg-daynum">'+d.getDate()+'</div>'
+      + '</div>';
+  }).join('');
+
+  const alldayCells = days.map(d=>{
+    const dStr = dateToStr(d);
+    const evs = (byDay[dStr]||[]).filter(e=>e.allDay);
+    return '<div class="cal-tg-allday-cell">'+evs.map(ev=>'<div class="cal-allday-chip" data-date="'+dStr+'" style="background:'+colorForCalendar(ev.calendar)+';" title="'+escapeAttr(ev.title||'Untitled')+'">'+escapeHtml(ev.title||'Untitled')+'</div>').join('')+'</div>';
+  }).join('');
+
+  const colCells = days.map(d=>{
+    const dStr = dateToStr(d);
+    const evs = (byDay[dStr]||[]).filter(e=>!e.allDay);
+    return buildDayColHtml(dStr, evs);
+  }).join('');
+
+  wrap.innerHTML = ''
+    + '<div class="cal-tg-header"><div class="cal-tg-gutter-spacer"></div><div class="cal-tg-headcells">'+headerCells+'</div></div>'
+    + '<div class="cal-tg-allday-row"><div class="cal-tg-gutter-spacer"></div><div class="cal-tg-allday-cells">'+alldayCells+'</div></div>'
+    + '<div class="cal-tg-body"><div class="cal-time-gutter">'+buildTimeGutterInner()+'</div><div class="cal-tg-columns">'+colCells+'</div></div>';
+
+  wrap.querySelectorAll('.cal-tg-day-head, .cal-event-block, .cal-allday-chip').forEach(el=>{
+    el.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const dStr = el.dataset.date;
+      if(!dStr) return;
+      state.selectedDay = dStr;
+      state.calendarView = 'day';
+      scheduleSave();
+      applyCalView();
+      renderAll();
+    });
+  });
+}
+function renderMonthGrid(){
+  const grid = document.getElementById('cal-month-grid');
+  const [y,m] = state.calendarViewedMonth.split('-').map(Number);
+  const firstOfMonth = new Date(y, m-1, 1);
+
+  const startDow = firstOfMonth.getDay();
+  const gridStart = new Date(y, m-1, 1 - startDow);
+  const today = todayStr();
+  const byDay = eventsByDayMap();
+  const weekdayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MAX_CHIPS = 2;
+
+  let html = weekdayNames.map(w=>'<div class="cal-weekday">'+w+'</div>').join('');
+  for(let i=0;i<42;i++){
+    const d = new Date(gridStart);
+    d.setDate(gridStart.getDate()+i);
+    const dStr = dateToStr(d);
+    const inMonth = d.getMonth()===(m-1);
+    const evs = (byDay[dStr]||[]).slice().sort((a,b)=>{
+      if(!!a.allDay !== !!b.allDay) return a.allDay ? -1 : 1;
+      return (a.start||'').localeCompare(b.start||'');
+    });
+    const chips = evs.slice(0,MAX_CHIPS).map(ev=>{
+      const color = colorForCalendar(ev.calendar);
+      const timePrefix = ev.allDay ? '' : formatTimeShort(ev.start)+' ';
+      return '<div class="cal-event-chip" style="background:'+color+';" title="'+escapeAttr((ev.allDay?'':formatTimeShort(ev.start)+' — ')+(ev.title||'Untitled'))+'">'+escapeHtml(timePrefix+(ev.title||'Untitled'))+'</div>';
+    }).join('');
+    const more = evs.length>MAX_CHIPS ? '<div class="cal-day-more">+'+(evs.length-MAX_CHIPS)+' more</div>' : '';
+    html += '<div class="cal-day '+(inMonth?'':'other-month')+' '+(dStr===today?'today':'')+' '+(dStr===state.selectedDay?'selected':'')+'" data-date="'+dStr+'">'
+      + '<div class="cal-day-num">'+d.getDate()+'</div>'
+      + '<div class="cal-day-chips">'+chips+more+'</div>'
+      + '</div>';
+  }
+  grid.innerHTML = '<div class="cal-grid">'+html+'</div>';
+
+  grid.querySelectorAll('.cal-day').forEach(cell=>{
+    cell.addEventListener('click', ()=>{
+      state.selectedDay = cell.dataset.date;
+      state.calendarView = 'day';
+      scheduleSave();
+      applyCalView();
+      scrollGridToTime(7*60);
+      renderAll();
+    });
+  });
+}
+function dateToStr(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function getWeekStart(dateStr){
+  const d = new Date(dateStr+'T00:00:00');
+  d.setDate(d.getDate() - d.getDay());
+  return dateToStr(d);
+}
+function renderWeekView(){
+  const start = new Date(state.calendarViewedWeekStart+'T00:00:00');
+  const days = [];
+  for(let i=0;i<7;i++){ const d = new Date(start); d.setDate(start.getDate()+i); days.push(d); }
+  renderTimeGridInto('cal-week-view', days);
+}
+function renderDayView(){
+  const day = state.selectedDay || todayStr();
+  renderTimeGridInto('cal-day-view', [new Date(day+'T00:00:00')]);
+}
+function renderAll(){
+  renderMonthGrid();
+  renderWeekView();
+  renderDayView();
+  renderCalColorList();
+}
+function updateCalNavLabel(){
+  const label = document.getElementById('cal-month-label');
+  if(state.calendarView==='month'){
+    const [y,m] = state.calendarViewedMonth.split('-').map(Number);
+    label.textContent = new Date(y, m-1, 1).toLocaleDateString(undefined, {month:'long', year:'numeric'});
+  } else if(state.calendarView==='week'){
+    const start = new Date(state.calendarViewedWeekStart+'T00:00:00');
+    const end = new Date(start); end.setDate(start.getDate()+6);
+    const sameMonth = start.getMonth()===end.getMonth();
+    label.textContent = start.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ' – ' + end.toLocaleDateString(undefined, sameMonth ? {day:'numeric', year:'numeric'} : {month:'short', day:'numeric', year:'numeric'});
+  } else {
+    const day = state.selectedDay || todayStr();
+    label.textContent = new Date(day+'T00:00:00').toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric', year:'numeric'});
+  }
+}
+function applyCalView(){
+  const view = state.calendarView;
+  document.getElementById('cal-month-grid').style.display = view==='month' ? '' : 'none';
+  document.getElementById('cal-week-view').style.display = view==='week' ? '' : 'none';
+  document.getElementById('cal-day-view').style.display = view==='day' ? '' : 'none';
+  document.getElementById('cal-zoom-row').style.display = view==='month' ? 'none' : 'flex';
+  document.getElementById('cal-view-month').classList.toggle('active', view==='month');
+  document.getElementById('cal-view-week').classList.toggle('active', view==='week');
+  document.getElementById('cal-view-day').classList.toggle('active', view==='day');
+  document.getElementById('cal-zoom-slider').value = hourHeight();
+  updateCalNavLabel();
+  applyAllDayVisibility();
+}
+document.getElementById('cal-view-month').addEventListener('click', ()=>{
+  state.calendarView = 'month'; scheduleSave(); applyCalView(); renderAll();
+});
+document.getElementById('cal-view-week').addEventListener('click', ()=>{
+  state.calendarViewedWeekStart = getWeekStart(state.selectedDay || todayStr());
+  state.calendarView = 'week'; scheduleSave(); applyCalView(); renderAll();
+  scrollGridToTime(7*60);
+});
+document.getElementById('cal-view-day').addEventListener('click', ()=>{
+  state.calendarView = 'day'; scheduleSave(); applyCalView(); renderAll();
+  scrollGridToTime(7*60);
+});
+document.getElementById('cal-prev-btn').addEventListener('click', ()=>{
+  if(state.calendarView==='month'){
+    const [y,m] = state.calendarViewedMonth.split('-').map(Number);
+    const d = new Date(y, m-2, 1);
+    state.calendarViewedMonth = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  } else if(state.calendarView==='week'){
+    const d = new Date(state.calendarViewedWeekStart+'T00:00:00');
+    d.setDate(d.getDate()-7);
+    state.calendarViewedWeekStart = dateToStr(d);
+  } else {
+    const d = new Date((state.selectedDay||todayStr())+'T00:00:00');
+    d.setDate(d.getDate()-1);
+    state.selectedDay = dateToStr(d);
+  }
+  scheduleSave(); applyCalView(); renderAll();
+});
+document.getElementById('cal-next-btn').addEventListener('click', ()=>{
+  if(state.calendarView==='month'){
+    const [y,m] = state.calendarViewedMonth.split('-').map(Number);
+    const d = new Date(y, m, 1);
+    state.calendarViewedMonth = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  } else if(state.calendarView==='week'){
+    const d = new Date(state.calendarViewedWeekStart+'T00:00:00');
+    d.setDate(d.getDate()+7);
+    state.calendarViewedWeekStart = dateToStr(d);
+  } else {
+    const d = new Date((state.selectedDay||todayStr())+'T00:00:00');
+    d.setDate(d.getDate()+1);
+    state.selectedDay = dateToStr(d);
+  }
+  scheduleSave(); applyCalView(); renderAll();
+});
+document.getElementById('cal-today-btn').addEventListener('click', ()=>{
+  const now = new Date();
+  state.calendarViewedMonth = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  state.selectedDay = todayStr();
+  state.calendarViewedWeekStart = getWeekStart(todayStr());
+  scheduleSave(); applyCalView(); renderAll();
+  if(state.calendarView==='week' || state.calendarView==='day') scrollGridToTime(7*60);
+});
+
+/* ---------- Zoom (row height) controls for week/day time grid ---------- */
+function setHourHeight(v){
+  state.calendarHourHeight = Math.max(12, Math.min(60, Math.round(v)));
+  document.getElementById('cal-zoom-slider').value = state.calendarHourHeight;
+  scheduleSave();
+  renderWeekView();
+  renderDayView();
+}
+function applyAllDayVisibility(){
+  const scrollBody = document.getElementById('cal-scroll-body');
+  if(!scrollBody) return;
+  scrollBody.classList.toggle('cal-hide-allday', !!state.calendarHideAllDay);
+  const btn = document.getElementById('cal-toggle-allday-btn');
+  if(btn) btn.textContent = state.calendarHideAllDay ? 'Show all-day' : 'Hide all-day';
+}
+document.getElementById('cal-toggle-allday-btn').addEventListener('click', ()=>{
+  state.calendarHideAllDay = !state.calendarHideAllDay;
+  scheduleSave();
+  applyAllDayVisibility();
+});
+document.getElementById('cal-zoom-slider').addEventListener('input', e=>{ setHourHeight(Number(e.target.value)); });
+document.getElementById('cal-zoom-out').addEventListener('click', ()=>{ setHourHeight(hourHeight()-4); });
+document.getElementById('cal-zoom-in').addEventListener('click', ()=>{ setHourHeight(hourHeight()+4); });
+document.getElementById('cal-fit-day-btn').addEventListener('click', ()=>{
+  const view = state.calendarView;
+  const containerId = view==='day' ? 'cal-day-view' : 'cal-week-view';
+  const scrollBody = document.getElementById('cal-scroll-body');
+  const el = document.getElementById(containerId);
+  if(!scrollBody || !el) return;
+  const header = el.querySelector('.cal-tg-header');
+  const allday = el.querySelector('.cal-tg-allday-row');
+  const headerH = header ? header.offsetHeight : 42;
+  const alldayH = allday ? allday.offsetHeight : 0;
+  const available = scrollBody.clientHeight - headerH - alldayH - 4;
+  setHourHeight(available/24);
+});
+
+
+/* ---------- To-do ---------- */
+function addTodo(text){
+  if(!text.trim()) return;
+  state.todos.push({id:uid(), text:text.trim(), done:false, currentDate:todayStr(), createdDate:todayStr()});
+  scheduleSave();
+  renderTodos();
+}
+document.getElementById('todo-add-btn').addEventListener('click', ()=>{
+  const inp = document.getElementById('todo-input');
+  addTodo(inp.value); inp.value=''; inp.focus();
+});
+document.getElementById('todo-input').addEventListener('keydown', e=>{
+  if(e.key==='Enter'){ addTodo(e.target.value); e.target.value=''; }
+});
+function renderTodos(){
+  const today = todayStr();
+  document.getElementById('todo-date-label').textContent = new Date().toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
+  const list = document.getElementById('todo-list');
+  const items = state.todos.filter(t=> t.currentDate===today || t.done).sort((a,b)=> (a.done - b.done) || a.createdDate.localeCompare(b.createdDate));
+  if(items.length===0){
+    list.innerHTML = '<div class="empty-note">Nothing here yet — add your first task above.</div>';
+    return;
+  }
+  list.innerHTML = items.map(t=>{
+    const age = Math.round((new Date(today)-new Date(t.createdDate))/86400000);
+    const ageLabel = (!t.done && age>0) ? '<span class="todo-age">carried '+age+'d</span>' : '';
+    return '<li class="todo-item '+(t.done?'done':'')+'" data-id="'+t.id+'">'
+      +'<input type="checkbox" class="check todo-check" '+(t.done?'checked':'')+'>'
+      +'<span class="todo-text">'+escapeHtml(t.text)+'</span>'
+      +ageLabel
+      +'<button class="todo-del" title="Delete">×</button>'
+      +'</li>';
+  }).join('');
+  list.querySelectorAll('.todo-check').forEach(cb=>{
+    cb.addEventListener('change', e=>{
+      const id = e.target.closest('.todo-item').dataset.id;
+      const t = state.todos.find(x=>x.id===id);
+      t.done = e.target.checked;
+      if(t.done) t.completedDate = today;
+      scheduleSave(); renderTodos();
+    });
+  });
+  list.querySelectorAll('.todo-del').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const id = e.target.closest('.todo-item').dataset.id;
+      state.todos = state.todos.filter(x=>x.id!==id);
+      scheduleSave(); renderTodos();
+    });
+  });
+}
+
+/* ---------- Assignments ---------- */
+const ADD_NEW_VALUE = '__add_new__';
+document.getElementById('assign-add-btn').addEventListener('click', ()=>{
+  state.assignments.unshift({id:uid(), name:'', due:'', subject:'', type:'', done:false});
+  scheduleSave();
+  renderAssignments();
+});
+function buildOptionSelect(list, current, cssClass){
+  const opts = (list||[]).slice().sort((a,b)=>a.localeCompare(b));
+  if(current && !opts.includes(current)) opts.push(current);
+  let html = '<select class="'+cssClass+'">';
+  if(!current) html += '<option value="" selected disabled hidden>Choose…</option>';
+  html += opts.map(o=>'<option value="'+escapeAttr(o)+'"'+(o===current?' selected':'')+'>'+escapeHtml(o)+'</option>').join('');
+  html += '<option value="'+ADD_NEW_VALUE+'">+ Add new…</option>';
+  html += '</select>';
+  return html;
+}
+function handleOptionSelectChange(selectEl, listKey, applyFn, promptLabel){
+  const val = selectEl.value;
+  if(val===ADD_NEW_VALUE){
+    const entered = (prompt(promptLabel) || '').trim();
+    if(!entered){ renderAssignments(); return; } // revert to previous rendered state
+    if(!state[listKey].includes(entered)) state[listKey].push(entered);
+    applyFn(entered);
+  } else {
+    applyFn(val);
+  }
+  scheduleSave();
+  renderAssignments();
+}
+document.getElementById('condense-toggle').addEventListener('click', ()=>{
+  state.condensed = !state.condensed;
+  document.getElementById('table-wrap').classList.toggle('condensed', state.condensed);
+  document.getElementById('condense-toggle').textContent = state.condensed ? 'Expand' : 'Condense';
+  scheduleSave();
+});
+
+document.getElementById('import-toggle').addEventListener('click', ()=>{
+  const panel = document.getElementById('import-panel');
+  panel.style.display = panel.style.display==='none' ? 'block' : 'none';
+});
+document.getElementById('import-cancel-btn').addEventListener('click', ()=>{
+  document.getElementById('import-panel').style.display = 'none';
+  document.getElementById('import-text').value='';
+  document.getElementById('import-msg').textContent='';
+});
+function toIsoDate(raw){
+  if(!raw) return '';
+  raw = raw.trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  let m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m) return m[3]+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0');
+  m = raw.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+  if(m) return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');
+  const d = new Date(raw);
+  if(!isNaN(d)) return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  return '';
+}
+function toBoolDone(raw){ return raw ? /^(true|yes|done|x|✓|complete|completed)$/i.test(raw.trim()) : false; }
+function titleCase(s){ return (s||'').replace(/\w\S*/g, t=> t.charAt(0).toUpperCase()+t.slice(1).toLowerCase()); }
+function parseImportText(text){
+  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+  if(lines.length===0) return [];
+  const isPipeTable = lines[0].includes('|');
+  let rows = [];
+  if(isPipeTable){
+    const dataLines = lines.filter(l=> l.includes('|'));
+    const cellsOf = l => l.split('|').map(c=>c.trim()).filter((c,i,arr)=> !(i===0&&c==='') && !(i===arr.length-1&&c===''));
+    const header = cellsOf(dataLines[0]).map(h=>h.toLowerCase());
+    const idx = {
+      done: header.findIndex(h=>h.includes('done')||h.includes('complete')),
+      name: header.findIndex(h=>h.includes('assignment')||h.includes('name')||h.includes('task')),
+      due: header.findIndex(h=>h.includes('due')),
+      subject: header.findIndex(h=>h.includes('subject')||h.includes('class')||h.includes('course')),
+      type: header.findIndex(h=>h.includes('type'))
+    };
+    for(let i=1;i<dataLines.length;i++){
+      const cells = cellsOf(dataLines[i]);
+      if(cells.length===0 || cells.every(c=>/^:?-+:?$/.test(c))) continue;
+      rows.push({
+        done: idx.done>=0 ? toBoolDone(cells[idx.done]) : false,
+        name: idx.name>=0 ? titleCase(cells[idx.name]) : (cells[0]||''),
+        due: idx.due>=0 ? toIsoDate(cells[idx.due]) : '',
+        subject: idx.subject>=0 ? (cells[idx.subject]||'').toUpperCase() : '',
+        type: idx.type>=0 ? titleCase(cells[idx.type]) : ''
+      });
+    }
+  } else {
+    for(const line of lines){
+      const parts = line.split(/\t|,(?![^(]*\))/).map(p=>p.trim());
+      if(parts.length<2) continue;
+      rows.push({ done:false, name: titleCase(parts[0]||''), due: toIsoDate(parts[1]||''), subject: (parts[2]||'').toUpperCase(), type: titleCase(parts[3]||'') });
+    }
+  }
+  return rows.filter(r=>r.name);
+}
+function runImport(mode){
+  const parsed = parseImportText(document.getElementById('import-text').value);
+  const msg = document.getElementById('import-msg');
+  if(parsed.length===0){ msg.textContent = "Couldn't find any rows in that text."; return; }
+  const newRows = parsed.map(r=>({id:uid(), name:r.name, due:r.due, subject:r.subject, type:r.type||'Other', done:r.done}));
+  state.assignments = mode==='replace' ? newRows : state.assignments.concat(newRows);
+  reconcileOptionLists();
+  scheduleSave(); renderAssignments();
+  msg.textContent = 'Imported ' + newRows.length + ' row' + (newRows.length===1?'':'s') + '.';
+  document.getElementById('import-text').value='';
+}
+document.getElementById('import-append-btn').addEventListener('click', ()=>runImport('append'));
+document.getElementById('import-replace-btn').addEventListener('click', ()=>runImport('replace'));
+
+function renderAssignments(){
+  document.getElementById('table-wrap').classList.toggle('condensed', state.condensed);
+  document.getElementById('condense-toggle').textContent = state.condensed ? 'Expand' : 'Condense';
+  const tbody = document.getElementById('assign-tbody');
+  const today = todayStr();
+  const sorted = [...state.assignments].sort((a,b)=> (a.due||'9999-99-99').localeCompare(b.due||'9999-99-99'));
+  if(sorted.length===0){
+    tbody.innerHTML = '<tr><td colspan="6" style="padding:20px 11px;color:var(--muted);">No assignments yet — add one to start tracking.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = sorted.map(a=>{
+    const overdue = a.due && a.due < today && !a.done;
+    const dueSoon = a.due && !a.done && a.due>=today && (new Date(a.due)-new Date(today))/86400000 <=2;
+    return '<tr class="'+(a.done?'done':'')+' '+(overdue?'overdue':'')+'" data-id="'+a.id+'">'
+      +'<td class="col-check"><input type="checkbox" class="check a-done" '+(a.done?'checked':'')+'></td>'
+      +'<td><input type="text" class="a-name cell-name" placeholder="Assignment name" value="'+escapeAttr(a.name)+'"></td>'
+      +'<td><input type="date" class="a-due '+(dueSoon?'due-soon':'')+'" value="'+escapeAttr(a.due)+'"></td>'
+      +'<td>'+buildOptionSelect(state.assignmentSubjects, a.subject, 'a-subject')+'</td>'
+      +'<td>'+buildOptionSelect(state.assignmentTypes, a.type, 'a-type')+'</td>'
+      +'<td class="col-del"><button class="row-del" title="Delete row">×</button></td>'
+      +'</tr>';
+  }).join('');
+
+  tbody.querySelectorAll('tr[data-id]').forEach(row=>{
+    const id = row.dataset.id;
+    const a = state.assignments.find(x=>x.id===id);
+    if(!a) return;
+    row.querySelector('.a-done').addEventListener('change', e=>{ a.done=e.target.checked; scheduleSave(); renderAssignments(); });
+    row.querySelector('.a-name').addEventListener('input', e=>{ a.name=e.target.value; scheduleSave(); });
+    // Update the date as the user types/picks, but don't re-sort/rebuild the table
+    // until they're done editing (blur) — rebuilding mid-edit was resetting the
+    // native date input and made the year hard to type.
+    const dueInput = row.querySelector('.a-due');
+    dueInput.addEventListener('input', e=>{ a.due=e.target.value; scheduleSave(); });
+    dueInput.addEventListener('blur', ()=>{ renderAssignments(); });
+    row.querySelector('.a-subject').addEventListener('change', e=>{
+      handleOptionSelectChange(e.target, 'assignmentSubjects', v=>{ a.subject=v; }, 'New subject name (e.g. course code):');
+    });
+    row.querySelector('.a-type').addEventListener('change', e=>{
+      handleOptionSelectChange(e.target, 'assignmentTypes', v=>{ a.type=v; }, 'New assignment type:');
+    });
+    row.querySelector('.row-del').addEventListener('click', ()=>{ state.assignments = state.assignments.filter(x=>x.id!==id); scheduleSave(); renderAssignments(); });
+  });
+}
+
+/* ---------- Notes ---------- */
+document.getElementById('note-add-btn').addEventListener('click', ()=>{
+  state.notes.unshift({id:uid(), title:'', body:''});
+  scheduleSave(); renderNotes();
+});
+function renderNotes(){
+  const wrap = document.getElementById('notes-list');
+  if(state.notes.length===0){
+    wrap.innerHTML = '<div class="empty-note">No notes yet — click "New note" to start one.</div>';
+    return;
+  }
+  wrap.innerHTML = state.notes.map(n=>
+    '<div class="note-card" data-id="'+n.id+'">'
+    +'<div class="note-card-head"><input class="note-title-input" placeholder="Untitled note" value="'+escapeAttr(n.title)+'"><button class="note-del">Delete</button></div>'
+    +'<textarea class="note-body" placeholder="Write here...">'+escapeHtml(n.body)+'</textarea>'
+    +'</div>'
+  ).join('');
+  wrap.querySelectorAll('.note-card').forEach(card=>{
+    const id = card.dataset.id;
+    const n = state.notes.find(x=>x.id===id);
+    card.querySelector('.note-title-input').addEventListener('input', e=>{ n.title=e.target.value; scheduleSave(); });
+    card.querySelector('.note-body').addEventListener('input', e=>{ n.body=e.target.value; scheduleSave(); });
+    card.querySelector('.note-del').addEventListener('click', ()=>{ state.notes = state.notes.filter(x=>x.id!==id); scheduleSave(); renderNotes(); });
+  });
+}
+
+function render(){
+  document.getElementById('today-flag').textContent = new Date().toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
+  renderCalDisplay();
+  renderGcalSettings();
+  renderSyncLabel();
+  applyCalView();
+  renderAll();
+  renderTodos();
+  renderAssignments();
+  renderNotes();
+  renderTheme();
+  renderCover();
+  renderPaletteRow();
+  renderCustomWidgets();
+  applyPanelOrder();
+  applyPanelSpans();
+  applyPanelWidths();
+  applyPanelHeights();
+  applyPanelVisibility();
+  applyPanelTitles();
+  renderPanelVisibility();
+}
+
+const FONT_STACKS = {
+  sans: "'Inter',-apple-system,sans-serif",
+  serif: "'Source Serif 4',serif",
+  mono: "'JetBrains Mono',monospace"
+};
+const PANEL_LABELS = { cal:'Calendar', todo:'To-do', assign:'Assignments', notes:'Notes' };
+const PANEL_EMOJI_DEFAULTS = { cal:'📅', todo:'✅', assign:'📚', notes:'🗒️' };
+
+/* ---------- Theme ---------- */
+function applyThemeVars(t){
+  const dark = state.mode==='dark';
+  document.documentElement.setAttribute('data-theme', state.mode);
+  document.documentElement.style.setProperty('--accent', t.accent);
+  document.documentElement.style.setProperty('--accent-soft', t.accent + '26');
+  document.documentElement.style.setProperty('--bg', dark ? '#232323' : t.bg);
+  document.documentElement.style.setProperty('--card', dark ? '#2C2C2B' : t.card);
+  document.documentElement.style.setProperty('--ink', dark ? '#ECECE9' : '#37352F');
+  document.documentElement.style.setProperty('--muted', dark ? '#97968F' : '#9B9A97');
+  document.documentElement.style.setProperty('--line', dark ? '#3C3C3A' : '#EBEBE9');
+  document.documentElement.style.setProperty('--line-strong', dark ? '#4C4C49' : '#DFDEDB');
+  document.documentElement.style.setProperty('--font-family', FONT_STACKS[state.font] || FONT_STACKS.sans);
+  document.documentElement.style.setProperty('--radius', state.radius + 'px');
+  document.documentElement.style.setProperty('--radius-sm', Math.max(2, state.radius-2) + 'px');
+}
+function renderTheme(){
+  applyThemeVars(state.theme);
+  document.getElementById('custom-accent').value = state.theme.accent;
+  document.getElementById('custom-bg').value = state.theme.bg;
+  document.getElementById('custom-card').value = state.theme.card;
+  document.getElementById('radius-slider').value = state.radius;
+  document.querySelectorAll('#mode-row .option-btn').forEach(b=> b.classList.toggle('active', b.dataset.mode===state.mode));
+  document.querySelectorAll('#font-row .option-btn').forEach(b=> b.classList.toggle('active', b.dataset.font===state.font));
+}
+document.querySelectorAll('#mode-row .option-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    state.mode = btn.dataset.mode;
+    scheduleSave(); renderTheme();
+  });
+});
+document.querySelectorAll('#font-row .option-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    state.font = btn.dataset.font;
+    scheduleSave(); renderTheme();
+  });
+});
+document.getElementById('radius-slider').addEventListener('input', (e)=>{
+  state.radius = parseInt(e.target.value,10);
+  scheduleSave(); applyThemeVars(state.theme);
+});
+function renderPaletteRow(){
+  const row = document.getElementById('palette-row');
+  row.innerHTML = PALETTES.map(p=>{
+    const active = state.theme.accent===p.accent && state.theme.bg===p.bg ? 'active' : '';
+    return '<div class="swatch '+active+'" data-id="'+p.id+'" title="'+p.name+'" style="background:linear-gradient(135deg, '+p.accent+' 50%, '+p.bg+' 50%)"></div>';
+  }).join('');
+  row.querySelectorAll('.swatch').forEach(sw=>{
+    sw.addEventListener('click', ()=>{
+      const p = PALETTES.find(x=>x.id===sw.dataset.id);
+      state.theme = { accent:p.accent, bg:p.bg, card:p.card };
+      scheduleSave();
+      renderTheme();
+      renderPaletteRow();
+    });
+  });
+}
+function updateCustomTheme(){
+  state.theme = {
+    accent: document.getElementById('custom-accent').value,
+    bg: document.getElementById('custom-bg').value,
+    card: document.getElementById('custom-card').value
+  };
+  scheduleSave();
+  applyThemeVars(state.theme);
+  renderPaletteRow();
+}
+document.getElementById('custom-accent').addEventListener('input', updateCustomTheme);
+document.getElementById('custom-bg').addEventListener('input', updateCustomTheme);
+document.getElementById('custom-card').addEventListener('input', updateCustomTheme);
+
+document.getElementById('settings-btn').addEventListener('click', ()=>{
+  document.getElementById('settings-popover').classList.toggle('open');
+});
+document.addEventListener('click', (e)=>{
+  const pop = document.getElementById('settings-popover');
+  if(pop.classList.contains('open') && !pop.contains(e.target) && e.target.id!=='settings-btn'){
+    pop.classList.remove('open');
+  }
+});
+document.getElementById('reset-appearance-btn').addEventListener('click', ()=>{
+  state.theme = Object.assign({}, DEFAULT_THEME);
+  state.mode = 'light';
+  state.font = 'sans';
+  state.radius = 8;
+  state.coverImage = '';
+  state.panelVisible = { cal:true, todo:true, assign:true, notes:true };
+  state.panelEmojis = {};
+  state.panelTitles = {};
+  scheduleSave();
+  renderTheme(); renderPaletteRow(); renderCover(); renderPanelVisibility(); applyPanelVisibility(); applyPanelTitles();
+});
+
+/* ---------- Panel visibility ---------- */
+function renderPanelVisibility(){
+  const wrap = document.getElementById('panel-visibility-list');
+  const builtins = Object.keys(PANEL_LABELS).map(id=>{
+    const label = state.panelTitles[id] || PANEL_LABELS[id];
+    const emoji = state.panelEmojis[id] || PANEL_EMOJI_DEFAULTS[id];
+    return '<div class="panel-visibility-row"><label><input type="checkbox" class="panel-vis-check" data-panel-id="'+id+'" '+(state.panelVisible[id]!==false?'checked':'')+'>'+emoji+' '+escapeHtml(label)+'</label></div>';
+  });
+  const customs = state.customWidgets.map(w=>{
+    const label = state.panelTitles[w.id] || w.title;
+    const emoji = state.panelEmojis[w.id] || WIDGET_EMOJI[w.type] || '🔹';
+    return '<div class="panel-visibility-row"><label><input type="checkbox" class="panel-vis-check" data-panel-id="'+w.id+'" '+(state.panelVisible[w.id]!==false?'checked':'')+'>'+emoji+' '+escapeHtml(label)+'</label><button class="note-del widget-vis-remove" data-panel-id="'+w.id+'" style="opacity:1;">Remove</button></div>';
+  });
+  wrap.innerHTML = builtins.join('') + customs.join('');
+  wrap.querySelectorAll('.panel-vis-check').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      state.panelVisible[cb.dataset.panelId] = cb.checked;
+      applyPanelVisibility();
+      scheduleSave();
+    });
+  });
+  wrap.querySelectorAll('.widget-vis-remove').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.panelId;
+      const panelEl = document.getElementById('panel-'+id);
+      if(panelEl){
+        const removeBtn = panelEl.querySelector('.widget-remove-btn');
+        if(removeBtn) removeBtn.click();
+      }
+    });
+  });
+}
+function applyPanelVisibility(){
+  Object.keys(state.panelVisible).forEach(id=>{
+    const el = document.getElementById('panel-'+id);
+    if(el) el.style.display = state.panelVisible[id]===false ? 'none' : '';
+  });
+}
+
+/* ---------- Editable panel titles / emoji ---------- */
+function applyPanelTitles(){
+  document.querySelectorAll('.panel-title-text').forEach(el=>{
+    const id = el.dataset.panelId;
+    if(state.panelTitles[id]) el.textContent = state.panelTitles[id];
+  });
+  document.querySelectorAll('.panel-emoji').forEach(el=>{
+    const id = el.dataset.panelId;
+    if(state.panelEmojis[id]) el.textContent = state.panelEmojis[id];
+  });
+}
+
+/* ---------- Cover image ---------- */
+function renderCover(){
+  const box = document.getElementById('cover-box');
+  const label = document.getElementById('cover-empty-label');
+  if(state.coverImage){
+    box.classList.remove('empty');
+    box.style.backgroundImage = "url('"+state.coverImage.replace(/'/g,"%27")+"')";
+    label.style.display='none';
+  } else {
+    box.classList.add('empty');
+    box.style.backgroundImage = '';
+    label.style.display='block';
+  }
+}
+document.getElementById('cover-edit-btn').addEventListener('click', ()=>{
+  document.getElementById('settings-popover').classList.add('open');
+});
+document.getElementById('cover-url-btn').addEventListener('click', ()=>{
+  const url = document.getElementById('cover-url-input').value.trim();
+  if(!url) return;
+  state.coverImage = url;
+  scheduleSave();
+  renderCover();
+  document.getElementById('cover-url-input').value='';
+});
+document.getElementById('cover-upload-btn').addEventListener('click', ()=>{
+  document.getElementById('cover-file-input').click();
+});
+function compressImageFile(file, maxDim, quality, cb){
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      cb(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => cb(null);
+    img.src = reader.result;
+  };
+  reader.onerror = () => cb(null);
+  reader.readAsDataURL(file);
+}
+document.getElementById('cover-file-input').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const msg = document.getElementById('cover-upload-msg');
+  if(msg) msg.textContent = 'Processing image…';
+  compressImageFile(file, 1400, 0.82, (dataUrl)=>{
+    if(!dataUrl){ if(msg) msg.textContent = "Couldn't read that image — try a different file."; return; }
+    state.coverImage = dataUrl;
+    scheduleSave();
+    renderCover();
+    if(msg) msg.textContent = '';
+  });
+  e.target.value = '';
+});
+document.getElementById('cover-remove-btn').addEventListener('click', ()=>{
+  state.coverImage = '';
+  scheduleSave();
+  renderCover();
+});
+
+/* ---------- Drag-to-reorder panels ---------- */
+function applyPanelOrder(){
+  state.panelOrder.forEach((id, i)=>{
+    const el = document.getElementById('panel-'+id);
+    if(el) el.style.order = i;
+  });
+}
+function applyPanelSpans(){
+  Object.keys(state.panelSpans).forEach(id=>{
+    const el = document.getElementById('panel-'+id);
+    if(el) el.dataset.span = state.panelSpans[id];
+  });
+}
+function applyPanelWidths(){
+  if(window.innerWidth <= 900) return; // let mobile layout stay full-width/responsive
+  Object.keys(state.panelWidths).forEach(id=>{
+    const el = document.getElementById('panel-'+id);
+    if(el && state.panelWidths[id]) el.style.width = state.panelWidths[id] + 'px';
+  });
+}
+function applyPanelHeights(){
+  Object.keys(state.panelHeights).forEach(id=>{
+    const panel = document.getElementById('panel-'+id);
+    const scrollEl = panel && panel.querySelector('.panel-scroll');
+    if(scrollEl) scrollEl.style.height = state.panelHeights[id] + 'px';
+  });
+}
+/* ---------- Shared panel behaviors (built-ins + custom widgets) ---------- */
+let resizeObserversReady = false;
+setTimeout(()=>{ resizeObserversReady = true; }, 400);
+let draggedPanelId = null;
+
+function initPanelBehaviors(panel){
+  const id = panel.dataset.panelId;
+  if(!id) return;
+
+  // width toggle
+  const widthBtn = panel.querySelector('.width-toggle');
+  if(widthBtn){
+    widthBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      state.panelSpans[id] = state.panelSpans[id]===2 ? 1 : 2;
+      delete state.panelWidths[id];
+      panel.style.width = '';
+      panel.dataset.span = state.panelSpans[id];
+      scheduleSave();
+    });
+  }
+
+  // width persistence via native CSS resize
+  const ro = new ResizeObserver(()=>{
+    if(!resizeObserversReady) return;
+    if(panel.offsetWidth > 0){
+      state.panelWidths[id] = panel.offsetWidth;
+      scheduleSave();
+    }
+  });
+  ro.observe(panel);
+
+  // height persistence for the panel's scrollable body
+  const scrollBody = panel.querySelector('.panel-scroll');
+  if(scrollBody){
+    const roH = new ResizeObserver(()=>{
+      if(!resizeObserversReady) return;
+      if(scrollBody.offsetHeight > 0){
+        state.panelHeights[id] = scrollBody.offsetHeight;
+        scheduleSave();
+      }
+    });
+    roH.observe(scrollBody);
+  }
+
+  // editable emoji / title
+  const emojiEl = panel.querySelector('.panel-emoji');
+  const titleEl = panel.querySelector('.panel-title-text');
+  if(titleEl){
+    titleEl.addEventListener('blur', ()=>{
+      const val = titleEl.textContent.trim() || PANEL_LABELS[id] || 'Untitled';
+      titleEl.textContent = val;
+      state.panelTitles[id] = val;
+      scheduleSave();
+      renderPanelVisibility();
+    });
+    titleEl.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); titleEl.blur(); } });
+  }
+  if(emojiEl){
+    emojiEl.addEventListener('blur', ()=>{
+      const val = emojiEl.textContent.trim().slice(0,4) || PANEL_EMOJI_DEFAULTS[id] || '🔹';
+      emojiEl.textContent = val;
+      state.panelEmojis[id] = val;
+      scheduleSave();
+      renderPanelVisibility();
+    });
+    emojiEl.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); emojiEl.blur(); } });
+  }
+
+  // remove (custom widgets only)
+  const removeBtn = panel.querySelector('.widget-remove-btn');
+  if(removeBtn){
+    removeBtn.addEventListener('click', ()=>{
+      state.customWidgets = state.customWidgets.filter(w=>w.id!==id);
+      state.panelOrder = state.panelOrder.filter(x=>x!==id);
+      delete state.panelSpans[id];
+      delete state.panelWidths[id];
+      delete state.panelHeights[id];
+      delete state.panelVisible[id];
+      delete state.panelEmojis[id];
+      delete state.panelTitles[id];
+      panel.remove();
+      scheduleSave();
+      renderPanelVisibility();
+    });
+  }
+
+  // drag to reorder
+  panel.draggable = false;
+  const handle = panel.querySelector('.drag-handle');
+  if(handle){
+    handle.addEventListener('mousedown', ()=>{ panel.draggable = true; });
+    handle.addEventListener('touchstart', ()=>{ panel.draggable = true; }, {passive:true});
+  }
+  document.addEventListener('mouseup', ()=>{ panel.draggable = false; });
+  panel.addEventListener('dragstart', ()=>{
+    draggedPanelId = id;
+    panel.classList.add('dragging');
+  });
+  panel.addEventListener('dragend', ()=>{
+    panel.classList.remove('dragging');
+    panel.draggable = false;
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('drag-over'));
+  });
+  panel.addEventListener('dragover', e=>{ e.preventDefault(); panel.classList.add('drag-over'); });
+  panel.addEventListener('dragleave', ()=>{ panel.classList.remove('drag-over'); });
+  panel.addEventListener('drop', e=>{
+    e.preventDefault();
+    panel.classList.remove('drag-over');
+    if(draggedPanelId && draggedPanelId!==id){
+      const order = state.panelOrder;
+      const from = order.indexOf(draggedPanelId);
+      const to = order.indexOf(id);
+      if(from>=0 && to>=0){
+        order.splice(from,1);
+        order.splice(to,0,draggedPanelId);
+        applyPanelOrder();
+        scheduleSave();
+      }
+    }
+  });
+}
+
+document.querySelectorAll('.panel').forEach(initPanelBehaviors);
+
+/* ---------- Custom widgets (images, embeds, links, text) ---------- */
+const WIDGET_EMOJI = { image:'🖼️', embed:'🎵', link:'🔗', text:'📝' };
+function toEmbeddableUrl(url){
+  url = url.trim();
+  try{
+    const u = new URL(url);
+    if(u.hostname.includes('youtube.com') && u.searchParams.get('v')){
+      return 'https://www.youtube.com/embed/' + u.searchParams.get('v');
+    }
+    if(u.hostname==='youtu.be'){
+      return 'https://www.youtube.com/embed/' + u.pathname.replace('/','');
+    }
+    if(u.hostname.includes('open.spotify.com') && !u.pathname.startsWith('/embed')){
+      return 'https://open.spotify.com/embed' + u.pathname;
+    }
+    if(u.hostname.includes('soundcloud.com')){
+      return 'https://w.soundcloud.com/player/?url=' + encodeURIComponent(url) + '&auto_play=false';
+    }
+  }catch(e){}
+  return url;
+}
+function buildWidgetPanelInner(widget){
+  const emoji = state.panelEmojis[widget.id] || WIDGET_EMOJI[widget.type] || '🔹';
+  const title = state.panelTitles[widget.id] || widget.title || 'Widget';
+  let body = '';
+  if(widget.type==='image'){
+    body = '<img src="'+escapeAttr(widget.data.src)+'" style="width:100%;border-radius:var(--radius-sm);display:block;" alt="">'
+      + (widget.data.caption ? '<div class="sub" style="margin-top:8px;">'+escapeHtml(widget.data.caption)+'</div>' : '');
+  } else if(widget.type==='embed'){
+    body = '<iframe src="'+escapeAttr(toEmbeddableUrl(widget.data.url))+'" style="width:100%;height:220px;border:none;border-radius:var(--radius-sm);" allow="autoplay; encrypted-media" allowfullscreen></iframe>';
+  } else if(widget.type==='link'){
+    let domain=''; try{ domain = new URL(widget.data.url).hostname; }catch(e){}
+    body = '<a href="'+escapeAttr(widget.data.url)+'" target="_blank" rel="noopener" style="display:block;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--bg);color:var(--ink);text-decoration:none;">'
+      + '<div style="font-weight:600;font-size:13.5px;">'+escapeHtml(widget.data.label || domain || widget.data.url)+'</div>'
+      + '<div class="sub" style="margin-top:3px;">'+escapeHtml(domain)+'</div></a>';
+  } else if(widget.type==='text'){
+    body = '<textarea class="note-body widget-text-body" data-widget-id="'+widget.id+'" style="min-height:100px;">'+escapeHtml(widget.data.body||'')+'</textarea>';
+  }
+  return '<div class="panel-head">'
+    + '<div><h2><span class="drag-handle">⋮⋮</span><span class="panel-emoji" contenteditable="true" spellcheck="false" data-panel-id="'+widget.id+'">'+emoji+'</span> <span class="panel-title-text" contenteditable="true" spellcheck="false" data-panel-id="'+widget.id+'">'+escapeHtml(title)+'</span></h2></div>'
+    + '<div class="assign-controls">'
+    + '<button class="width-toggle" data-panel-id="'+widget.id+'" title="Toggle width">⤢</button>'
+    + '<button class="btn ghost small widget-remove-btn" title="Remove widget">Remove</button>'
+    + '</div></div>'
+    + '<div class="panel-scroll">'+body+'</div>';
+}
+function renderCustomWidgets(){
+  const dashboard = document.querySelector('.dashboard');
+  const addCard = document.getElementById('add-widget-card');
+  state.customWidgets.forEach(widget=>{
+    let el = document.getElementById('panel-'+widget.id);
+    if(!el){
+      el = document.createElement('div');
+      el.className = 'panel';
+      el.id = 'panel-'+widget.id;
+      el.dataset.panelId = widget.id;
+      el.dataset.span = state.panelSpans[widget.id] || 1;
+      el.innerHTML = buildWidgetPanelInner(widget);
+      dashboard.insertBefore(el, addCard);
+      initPanelBehaviors(el);
+      const textArea = el.querySelector('.widget-text-body');
+      if(textArea){
+        textArea.addEventListener('input', ()=>{
+          widget.data.body = textArea.value;
+          scheduleSave();
+        });
+      }
+    }
+  });
+}
+function addWidget(type, data, title){
+  const id = 'w' + uid();
+  const widget = { id, type, title: title || (type.charAt(0).toUpperCase()+type.slice(1)), data };
+  state.customWidgets.push(widget);
+  state.panelOrder.push(id);
+  state.panelSpans[id] = type==='image' ? 1 : 1;
+  state.panelVisible[id] = true;
+  scheduleSave();
+  renderCustomWidgets();
+  applyPanelOrder();
+  renderPanelVisibility();
+}
+
+/* ---------- Add-widget UI ---------- */
+document.getElementById('add-widget-btn').addEventListener('click', ()=>{
+  document.getElementById('add-widget-form').classList.toggle('open');
+});
+document.querySelectorAll('.widget-type-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.widget-type-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.widget-input-group').forEach(g=> g.style.display='none');
+    document.getElementById('widget-input-'+btn.dataset.type).style.display='block';
+    document.getElementById('add-widget-form').dataset.type = btn.dataset.type;
+  });
+});
+document.getElementById('widget-image-upload-trigger').addEventListener('click', ()=>{
+  document.getElementById('widget-image-file').click();
+});
+document.getElementById('widget-image-file').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const msg = document.getElementById('widget-image-msg');
+  msg.textContent = 'Processing image…';
+  compressImageFile(file, 1400, 0.82, (dataUrl)=>{
+    if(!dataUrl){ msg.textContent = "Couldn't read that image."; return; }
+    document.getElementById('widget-image-url').value = dataUrl;
+    msg.textContent = 'Image ready — click Add below.';
+  });
+});
+document.getElementById('widget-add-confirm').addEventListener('click', ()=>{
+  const type = document.getElementById('add-widget-form').dataset.type || 'image';
+  if(type==='image'){
+    const src = document.getElementById('widget-image-url').value.trim();
+    if(!src) return;
+    addWidget('image', { src, caption: document.getElementById('widget-image-caption').value.trim() }, 'Image');
+    document.getElementById('widget-image-url').value='';
+    document.getElementById('widget-image-caption').value='';
+    document.getElementById('widget-image-msg').textContent='';
+  } else if(type==='embed'){
+    const url = document.getElementById('widget-embed-url').value.trim();
+    if(!url) return;
+    addWidget('embed', { url }, 'Embed');
+    document.getElementById('widget-embed-url').value='';
+  } else if(type==='link'){
+    const url = document.getElementById('widget-link-url').value.trim();
+    if(!url) return;
+    addWidget('link', { url, label: document.getElementById('widget-link-label').value.trim() }, 'Link');
+    document.getElementById('widget-link-url').value='';
+    document.getElementById('widget-link-label').value='';
+  } else if(type==='text'){
+    addWidget('text', { body:'' }, 'Note');
+  }
+  document.getElementById('add-widget-form').classList.remove('open');
+});
+
+load();
+</script>
+
+</body>
+</html>
