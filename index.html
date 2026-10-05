@@ -736,8 +736,10 @@ function rollTodos(){
     state.todos.forEach(t=>{ if(!t.done) t.currentDate = today; });
     state.lastOpenDate = today;
     scheduleSave();
+    render();
   }
 }
+setInterval(rollTodos, 60000);
 function daysBetween(a,b){ return Math.round((new Date(a)-new Date(b))/-86400000)*-1; }
 function escapeHtml(s){ return (s||'').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 function escapeAttr(s){ return (s||'').replace(/"/g,'&quot;'); }
